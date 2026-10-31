@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { ScrollView, Text } from 'react-native';
 import { useStore } from './store';
 import { CHECKBOX_TEXT, TERMS_VERSION } from './terms';
-import { TermsSheet } from './TermsSheet';
+import { NOT_READ, ReadState, TermsSheet } from './TermsSheet';
 import { C, font } from './theme';
 import { Btn, Card, Check, Head, Muted } from './ui';
 
@@ -11,11 +11,14 @@ export default function TermsGate() {
   const { S, update, reset } = useStore();
   const [agree, setAgree] = useState(false);
   const [open, setOpen] = useState(false);
+  const [read, setRead] = useState<ReadState>(NOT_READ);
+  const allRead = read.terms && read.privacy;
+  const markRead = (w: 'terms' | 'privacy') => setRead((r) => (r[w] ? r : { ...r, [w]: true }));
   const [declined, setDeclined] = useState(false);
   const updated = !!S.terms; // 以前に別の版へ同意している
 
   const accept = () => {
-    if (!agree) return;
+    if (!agree || !allRead) return;
     // アカウントがあるときは、サーバへの記録を後で送る（接続できなくても使える）
     update((s) => ({ ...s, terms: { version: TERMS_VERSION, at: Date.now(), synced: !s.account } }));
   };
@@ -55,12 +58,17 @@ export default function TermsGate() {
           {'・いつでも、マイページからアカウントを削除できます。'}
         </Text>
       </Card>
-      <Btn kind="ghost" label="📄 利用規約・プライバシーポリシーを読む" onPress={() => setOpen(true)} />
-      <Check on={agree} label={CHECKBOX_TEXT} onPress={() => setAgree(!agree)} />
-      <Btn label="同意して使う" onPress={accept} style={{ opacity: agree ? 1 : 0.45 }} />
+      <Btn kind={allRead ? 'ghost' : 'solid'} label={allRead ? '📄 もう一度読む' : '📄 利用規約・プライバシーポリシーを読む（必須）'} onPress={() => setOpen(true)} />
+      <Muted>
+        {allRead
+          ? '✓ 利用規約とプライバシーポリシーを、最後まで読みました。'
+          : `同意のチェックは、利用規約とプライバシーポリシーを、画面を下まで動かして最後まで読むと入れられます。（利用規約 ${read.terms ? '✓' : '未'}／プライバシーポリシー ${read.privacy ? '✓' : '未'}）`}
+      </Muted>
+      <Check on={agree} disabled={!allRead} label={CHECKBOX_TEXT} onPress={() => (allRead ? setAgree(!agree) : setOpen(true))} />
+      <Btn label="同意して使う" onPress={accept} style={{ opacity: agree && allRead ? 1 : 0.45 }} />
       <Btn small kind="ghost" label="同意しない" onPress={() => setDeclined(true)} style={{ alignSelf: 'flex-start' }} />
       <Muted>※ 試験運用版の規約です。正式公開前に見直します。</Muted>
-      <TermsSheet visible={open} onClose={() => setOpen(false)} />
+      <TermsSheet visible={open} onClose={() => setOpen(false)} read={read} onRead={markRead} />
     </ScrollView>
   );
 }

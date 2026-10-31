@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { addPasskey, friendly, loginWithPasskey, loginWithRecoveryCode, passkeySupported, recordTerms, startAccount } from './account';
 import { CHECKBOX_TEXT, TERMS_VERSION } from './terms';
-import { TermsSheet } from './TermsSheet';
+import { NOT_READ, ReadState, TermsSheet } from './TermsSheet';
 import { BUILD } from './config';
 import { GENRES, NOODLE_TYPES, RICHNESS, THICKNESS, TOPPINGS } from './data';
 import { useStore } from './store';
@@ -30,6 +30,10 @@ export default function Onboarding() {
   const [err, setErr] = useState('');
   const [agree, setAgree] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
+  // 利用規約・プライバシーポリシーを最後まで読むまで、同意のチェックは入れられない
+  const [read, setRead] = useState<ReadState>(NOT_READ);
+  const allRead = read.terms && read.privacy;
+  const markRead = (w: 'terms' | 'privacy') => setRead((r) => (r[w] ? r : { ...r, [w]: true }));
   const canPasskey = passkeySupported();
   // 入り口を分ける: choose=最初の画面 / new=はじめての方（新規登録）/ login=登録済みの方（ログイン）
   const [step, setStep] = useState<'choose' | 'new' | 'login'>(passkeySupported() ? 'choose' : 'new');
@@ -263,8 +267,13 @@ export default function Onboarding() {
 
       <Card>
         <Lbl>⑦ 利用規約への同意</Lbl>
-        <Check on={agree} label={CHECKBOX_TEXT} onPress={() => setAgree(!agree)} />
-        <Btn small kind="ghost" label="📄 利用規約・プライバシーポリシーを読む" onPress={() => setShowTerms(true)} style={{ alignSelf: 'flex-start' }} />
+        <Btn small kind={allRead ? 'ghost' : 'solid'} label={allRead ? '📄 もう一度読む' : '📄 利用規約・プライバシーポリシーを読む（必須）'} onPress={() => setShowTerms(true)} style={{ alignSelf: 'flex-start' }} />
+        <Muted>
+          {allRead
+            ? '✓ 利用規約とプライバシーポリシーを、最後まで読みました。'
+            : `同意のチェックは、利用規約とプライバシーポリシーを、画面を下まで動かして最後まで読むと入れられます。（利用規約 ${read.terms ? '✓' : '未'}／プライバシーポリシー ${read.privacy ? '✓' : '未'}）`}
+        </Muted>
+        <Check on={agree} disabled={!allRead} label={CHECKBOX_TEXT} onPress={() => (allRead ? setAgree(!agree) : showToast('先に、利用規約とプライバシーポリシーを最後まで読んでください。'))} />
       </Card>
 
       {canPasskey ? (
@@ -284,7 +293,7 @@ export default function Onboarding() {
       )}
       </>
       ) : null}
-      <TermsSheet visible={showTerms} onClose={() => setShowTerms(false)} />
+      <TermsSheet visible={showTerms} onClose={() => setShowTerms(false)} read={read} onRead={markRead} />
       <Text style={{ color: C.ink3, fontSize: 11, textAlign: 'center' }}>build {BUILD}</Text>
     </ScrollView>
   );

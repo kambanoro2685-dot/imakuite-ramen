@@ -41,9 +41,9 @@ export function Chip({ label, on, onPress }: { label: string; on: boolean; onPre
 }
 
 /** チェックボックス（同意などに使う） */
-export function Check({ on, label, onPress }: { on: boolean; label: string; onPress: () => void }) {
+export function Check({ on, label, onPress, disabled }: { on: boolean; label: string; onPress: () => void; disabled?: boolean }) {
   return (
-    <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: on }} onPress={onPress} style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-start' }}>
+    <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: on, disabled: !!disabled }} onPress={onPress} style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-start', opacity: disabled ? 0.45 : 1 }}>
       <View style={{ width: 24, height: 24, borderWidth: 2, borderColor: on ? C.indigo : C.ink2, backgroundColor: on ? C.indigo : '#FFFEF8', borderRadius: 3, alignItems: 'center', justifyContent: 'center', marginTop: 1 }}>
         {on ? <Text style={{ color: '#fff', fontWeight: '800', fontSize: 16, lineHeight: 18 }}>✓</Text> : null}
       </View>
