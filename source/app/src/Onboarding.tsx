@@ -28,6 +28,9 @@ export default function Onboarding() {
   const [agree, setAgree] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
   const canPasskey = passkeySupported();
+  // 入り口を分ける: choose=最初の画面 / new=はじめての方（新規登録）/ login=登録済みの方（ログイン）
+  const [step, setStep] = useState<'choose' | 'new' | 'login'>(passkeySupported() ? 'choose' : 'new');
+  const go = (s: 'choose' | 'new' | 'login') => { setStep(s); setErr(''); };
   const [showRecovery, setShowRecovery] = useState(false);
   const [rcode, setRcode] = useState('');
 
@@ -120,8 +123,29 @@ export default function Onboarding() {
           ImaKuite<Text style={{ color: C.crit }}>!</Text>Ramen<Text style={{ color: C.crit }}>!</Text>
         </Text>
         <Text style={{ color: C.amber, fontWeight: '700' }}>今日からあなたも、ラーメンインスペクター。</Text>
-        <Muted>調査官登録書（第1号様式）。必要最小限だけ記入してください。氏名・住所・連絡先は集めません。</Muted>
+        {step === 'choose' ? <Muted>はじめての方と、登録済みの方で、入り口が分かれています。</Muted> : null}
+        {step === 'new' ? <Muted>調査官登録書（第1号様式）。必要最小限だけ記入してください。氏名・住所・連絡先は集めません。</Muted> : null}
+        {step === 'login' ? <Muted>おかえりなさい。登録したときの方法で、ログインしてください。</Muted> : null}
       </View>
+
+      {step !== 'choose' && canPasskey ? (
+        <Btn small kind="ghost" label="← 最初の画面にもどる" onPress={() => go('choose')} style={{ alignSelf: 'flex-start' }} />
+      ) : null}
+
+      {step === 'choose' ? (
+        <View style={{ gap: 14 }}>
+          <Card>
+            <Lbl>はじめての方</Lbl>
+            <Muted>調査官名と、好きなラーメンの好みを登録します。数分で終わります。</Muted>
+            <Btn label="新しく登録する" onPress={() => go('new')} />
+          </Card>
+          <Card>
+            <Lbl>登録済みの方</Lbl>
+            <Muted>以前に登録した調査官は、パスキーか復旧コードでログインします。</Muted>
+            <Btn kind="ghost" label="ログインする" onPress={() => go('login')} />
+          </Card>
+        </View>
+      ) : null}
 
       {err ? (
         <Card>
@@ -129,9 +153,9 @@ export default function Onboarding() {
         </Card>
       ) : null}
 
-      {canPasskey ? (
+      {step === 'login' && canPasskey ? (
         <Card flat>
-          <Lbl>すでに登録済みの方</Lbl>
+          <Lbl>登録済みの方のログイン</Lbl>
           <Btn kind="ghost" label={busy ? '確認中…' : 'パスキーでログイン'} onPress={login()} />
           <Btn small kind="ghost" label={showRecovery ? '閉じる' : 'パスキーをなくした・使えない方（復旧コード）'} onPress={() => setShowRecovery(!showRecovery)} style={{ alignSelf: 'flex-start' }} />
           {showRecovery ? (
@@ -144,6 +168,8 @@ export default function Onboarding() {
         </Card>
       ) : null}
 
+      {step === 'new' ? (
+      <>
       <Card>
         <Lbl>調査官ID</Lbl>
         <Text style={{ fontSize: 22, fontWeight: '800', color: C.indigo, letterSpacing: 1 }}>{S.uid}</Text>
@@ -233,6 +259,8 @@ export default function Onboarding() {
           <Muted>この環境ではパスキーを使えないため、端末内だけで保存します（アカウント機能は現在 Web 版のみ）。</Muted>
         </>
       )}
+      </>
+      ) : null}
       <TermsSheet visible={showTerms} onClose={() => setShowTerms(false)} />
       <Text style={{ color: C.ink3, fontSize: 11, textAlign: 'center' }}>build {BUILD}</Text>
     </ScrollView>
