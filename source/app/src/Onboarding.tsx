@@ -50,10 +50,21 @@ export default function Onboarding() {
     return `${friendly(e)}  [${x?.name ?? ''}${x?.code ? ' ' + x.code : ''}${x?.status ? ' ' + x.status : ''}]`;
   };
 
+  // 足りない項目は、ボタンのすぐ近くに文字で出す（トーストは消えるうえ、画面の外にあると気づきにくい）
+  const [formMsg, setFormMsg] = useState('');
   const validate = () => {
-    if (!nick.trim()) { showToast('調査官名（ニックネーム）を入れてください。本名は不要です。'); return false; }
-    if (favs.length === 0) { showToast('好きなラーメンの系統を1つ以上選んでください。'); return false; }
-    if (!agree) { showToast('利用規約とプライバシーポリシーへの同意が必要です。チェックを入れてください。'); return false; }
+    const miss: string[] = [];
+    if (!nick.trim()) miss.push('① 調査官名（本名は不要です）');
+    if (favs.length === 0) miss.push('② 好きなラーメンの系統（1つ以上）');
+    if (!allRead) miss.push('⑦ 利用規約とプライバシーポリシーを最後まで読む');
+    else if (!agree) miss.push('⑦ 同意のチェック');
+    if (miss.length) {
+      const msg = `まだ足りません: ${miss.join('、')}。`;
+      setFormMsg(msg);
+      showToast(msg);
+      return false;
+    }
+    setFormMsg('');
     return true;
   };
 
@@ -276,6 +287,8 @@ export default function Onboarding() {
         <Check on={agree} disabled={!allRead} label={CHECKBOX_TEXT} onPress={() => (allRead ? setAgree(!agree) : showToast('先に、利用規約とプライバシーポリシーを最後まで読んでください。'))} />
       </Card>
 
+      {formMsg ? <Text selectable style={{ color: C.crit, fontWeight: '700', lineHeight: 21 }}>⚠ {formMsg}</Text> : null}
+      {err ? <Text selectable style={{ color: C.crit, fontWeight: '700', lineHeight: 21 }}>{err}</Text> : null}
       {canPasskey ? (
         <>
           <Btn label={busy ? '登録中…' : 'アカウントを登録する（パスキー・推奨）'} onPress={register} />
