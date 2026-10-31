@@ -151,7 +151,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
             posts: (loaded.posts ?? []).map((p) => ({ ...p, venue: fix(p.venue) })),
           };
           // 後から増えた入力項目（具材・トッピング・付け合わせ）は、古い保存データでも最初から使えるようにする
-          const addedKeys = ['base', 'base_other', 'toppings', 'tops_other', 'sides', 'sides_other', 'removed', 'removed_other', 'disliked', 'disliked_other'].filter((k) => loaded.palette?.[k] === undefined);
+          const addedKeys = ['photo', 'price', 'amount', 'note', 'soup', 'rec', 'toppings', 'base', 'sides', 'removed', 'disliked'].filter((k) => loaded.palette?.[k] === undefined);
           const palette = { ...base.palette, ...(loaded.palette ?? {}), ...Object.fromEntries(addedKeys.map((k) => [k, true])) };
           setS({ ...base, ...migrated, palette, account, profile: { ...base.profile, ...loaded.profile, } });
         }

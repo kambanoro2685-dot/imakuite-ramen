@@ -1,29 +1,17 @@
 import React, { useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
-import { RANKS } from './data';
+import { POINT_RULES, RANKS } from './data';
 import { Go } from './nav';
 import { rankOf, useStore } from './store';
 import { C, font, mono } from './theme';
 import { TermsSheet } from './TermsSheet';
 import { Btn, Card, Head, Lbl, Meter, Muted } from './ui';
 
-// サーバが計算するポイント（supabase/migrations/0001_init.sql の submit_visit と一致させる）
+// サーバが計算するポイント（data.ts の POINT_RULES と、supabase/migrations の submit_visit が同じ表）
+const RANK_TAG = ['', '【三級〜】', '【二級〜】', '【一級〜】', '【主任〜】'];
 const POINTS: { n: string; pt: string; note?: string }[] = [
-  { n: '基本提出', pt: '+10' },
-  { n: '自分は未踏の店で投稿', pt: '+30' },
-  { n: '一杯カード（品名）', pt: '+8', note: '1来店で最大5枚' },
-  { n: 'スープの系統を選ぶ', pt: '+5' },
-  { n: '写真（1枚ごと・最大3枚）', pt: '+5', note: 'Web版・アカウント登録時にサーバへ保存' },
-  { n: '【三級〜】清掃5項目をそろえる', pt: '+15' },
-  { n: '【三級〜】環境（静かさ＋待ち時間）', pt: '+10' },
-  { n: '【三級〜】体調（入店前の空腹＋食後の満腹）', pt: '+6' },
-  { n: '【三級〜】濃さ・麺の太さ・麺の硬さをそろえる', pt: '+8' },
-  { n: '【二級〜】スープの味の分析（甘み・塩気・酸味・苦み・うま味・辛さのうち3つ以上）', pt: '+8' },
-  { n: '【二級〜】接客＋提供までの時間', pt: '+5' },
-  { n: '【一級〜】品質4項目（香り・食感・温度・盛り付け）', pt: '+10' },
-  { n: '【一級〜】混み具合＋支払い方法＋喫煙', pt: '+6' },
-  { n: '【主任〜】騒音の測定', pt: '+5' },
-  { n: '新しい店を登録', pt: '+100', note: '※登録画面は準備中' },
+  ...POINT_RULES.map((r) => ({ n: RANK_TAG[r.rank] + r.n, pt: '+' + r.pt, note: r.note })),
+  { n: '新しい店を追加（アカウント登録済みの人）', pt: '+100', note: '調査報告書の「現在地の店として追加」。アカウントがないときは、この端末だけの店でポイントなし' },
   { n: '自分で誤りを訂正（提出後72時間以内）', pt: '+3' },
   { n: 'ルーレットの店に行って投稿', pt: '+25', note: '※サーバ側の判定は準備中' },
   { n: '他の人の誤りを指摘して採用', pt: '+40', note: '※準備中' },

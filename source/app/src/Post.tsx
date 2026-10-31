@@ -4,7 +4,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { photoSupported, processPhoto } from './photo';
 import { uploadPhoto } from './storage';
 import { DraftPhoto, useDraft } from './draft';
-import { FIELDS, RANKS, TIER_TITLES } from './data';
+import { FIELDS, RANKS, TIER_TITLES, evalRules, ruleOf } from './data';
 import { createShop, friendly } from './account';
 import { useVenues, walkMin, walkText } from './venues';
 import { Go } from './nav';
@@ -13,7 +13,7 @@ import { uuid4 } from './supabase';
 import { Post, rankIndexOf, useStore } from './store';
 import { useSyncer } from './useSyncer';
 import { C, mono } from './theme';
-import { Btn, Chip, Chips, Faces, Head, Input, Lbl, Muted, Steps, s } from './ui';
+import { Btn, Card, Chip, Chips, Faces, Head, Input, Lbl, Muted, Steps, s } from './ui';
 
 const SAT: [string, string][] = [['😞', 'いまいち'], ['😐', 'ふつう'], ['🙂', 'good'], ['😋', 'うまい'], ['🤩', '絶品']];
 
@@ -23,16 +23,22 @@ export function draftPoints(
   visited: string[],
   rankIdx: number,
 ) {
-  let p = 0;
-  if (D.dish.trim()) p += 10;
-  if (D.sat) p += 5;
-  if (D.venue) p += 10;
-  if (D.stamp) p += 15;
-  if (D.rouletteId) p += 15;
-  for (const f of FIELDS) if (f.rank <= rankIdx && palette[f.k] && D.vals[f.k] && f.type !== 'photo') p += f.pt;
-  if (palette.photo) p += 5 * Math.min(3, D.photos.length);
-  if (D.venue && !visited.includes(D.venue)) p += 30;
-  return p;
+  return pointBreakdown(D, palette, visited, rankIdx).reduce((a, x) => a + x.pt, 0);
+}
+
+/** いまの入力で付くポイントの内訳（サーバの submit_visit と同じ表。ONの項目だけ数える） */
+export function pointBreakdown(
+  D: ReturnType<typeof useDraft>['D'],
+  palette: Record<string, boolean>,
+  visited: string[],
+  rankIdx: number,
+) {
+  const vals: Record<string, string> = {};
+  for (const f of FIELDS) {
+    const on = f.parent ? palette[f.parent] : palette[f.k];
+    if (f.rank <= rankIdx && on && f.type !== 'photo' && D.vals[f.k]) vals[f.k] = D.vals[f.k];
+  }
+  return evalRules({ dish: D.dish, vals, photos: palette.photo ? D.photos.length : 0, firstVisit: !!D.venue && !visited.includes(D.venue), rankIdx });
 }
 
 export default function PostScreen({ go }: { go: Go }) {
@@ -40,7 +46,7 @@ export default function PostScreen({ go }: { go: Go }) {
   const { D, setD, clear } = useDraft();
   const syncer = useSyncer();
   const rankIdx = rankIndexOf(S.pt);
-  const active = FIELDS.filter((f) => f.rank <= rankIdx && S.palette[f.k]);
+  const active = FIELDS.filter((f) => f.rank <= rankIdx && (f.parent ? S.palette[f.parent] : S.palette[f.k]));
   const pts = draftPoints(D, S.palette, S.visited, rankIdx);
   const { venues, byId, center, loading, error, locating, useMyLocation, locateHere, addVenue, addLocalVenue, resetCenter, radius, reload } = useVenues();
   const [adding, setAdding] = React.useState(false);
@@ -261,8 +267,9 @@ export default function PostScreen({ go }: { go: Go }) {
 
         {active.map((f) => (
           <View key={f.k} style={{ gap: 7 }}>
-            <Lbl>{`${f.n}　+${f.pt}pt`}</Lbl>
+            <Lbl>{f.n}</Lbl>
             {f.hint ? <Muted>{f.hint}</Muted> : null}
+            {ruleOf(f.g) && !f.parent && active.findIndex((x) => x.g === f.g) === active.indexOf(f) ? <Muted>🏷 「{ruleOf(f.g)!.n}」の組 ＋{ruleOf(f.g)!.pt}pt{ruleOf(f.g)!.note ? `（${ruleOf(f.g)!.note}）` : ''}</Muted> : null}
             {f.type === 'pick' ? (
               <Chips>
                 {f.opts.map((o) => (
@@ -355,6 +362,13 @@ export default function PostScreen({ go }: { go: Go }) {
           </View>
         ))}
 
+        <Card flat>
+          <Lbl>いまの入力で付くポイント</Lbl>
+          {pointBreakdown(D, S.palette, S.visited, rankIdx).map((x) => (
+            <Text key={x.kind} style={{ color: C.ink2, fontSize: 13 }}>・{x.n}　<Text style={{ fontFamily: mono, color: C.good, fontWeight: '800' }}>+{x.pt}pt</Text></Text>
+          ))}
+          <Muted>同じ組の項目は、全部そろえると付きます。ポイントは、提出するとサーバが計算します（アカウントがないときは、この端末で同じ表で計算します）。</Muted>
+        </Card>
         <Btn kind="ghost" label="⚙️ 入力する項目を選ぶ" onPress={() => go('palette')} />
       </ScrollView>
 
@@ -373,16 +387,17 @@ export function Palette({ go }: { go: Go }) {
   const { S, update } = useStore();
   const { setD } = useDraft();
   const rankIdx = rankIndexOf(S.pt);
-  const total = FIELDS.length;
-  const open = FIELDS.filter((f) => f.rank <= rankIdx).length;
+  const total = FIELDS.filter((f) => !f.parent).length;
+  const open = FIELDS.filter((f) => f.rank <= rankIdx && !f.parent).length;
 
   const toggle = (k: string) => {
     const on = !S.palette[k];
-    update((st) => ({ ...st, palette: { ...st.palette, [k]: on } }));
-    if (!on) setD((x) => ({ ...x, vals: { ...x.vals, [k]: '' } }));
+    const keys = [k, ...FIELDS.filter((f) => f.parent === k).map((f) => f.k)];
+    update((st) => ({ ...st, palette: { ...st.palette, ...Object.fromEntries(keys.map((x) => [x, on])) } }));
+    if (!on) setD((x) => ({ ...x, vals: { ...x.vals, ...Object.fromEntries(keys.map((x2) => [x2, ''])) } }));
   };
   const setTier = (tier: number, on: boolean) => {
-    const keys = FIELDS.filter((f) => f.rank === tier).map((f) => f.k);
+    const keys = FIELDS.filter((f) => f.rank === tier).map((f) => f.k); // 自由入力も含む
     update((st) => {
       const next = { ...st.palette };
       keys.forEach((k) => { next[k] = on; });
@@ -399,7 +414,7 @@ export function Palette({ go }: { go: Go }) {
       </Muted>
 
       {TIER_TITLES.map((title, tier) => {
-        const fields = FIELDS.filter((f) => f.rank === tier);
+        const fields = FIELDS.filter((f) => f.rank === tier && !f.parent);
         const locked = tier > rankIdx;
         const need = RANKS[tier].at - S.pt;
         const allOn = fields.every((f) => S.palette[f.k]);
@@ -430,7 +445,7 @@ export function Palette({ go }: { go: Go }) {
                     <Text style={{ fontSize: 14.5, fontWeight: '700', color: C.ink }}>{f.n}</Text>
                     {f.hint ? <Text style={{ fontSize: 11.5, color: C.ink3 }}>{f.hint}</Text> : null}
                   </View>
-                  <Text style={{ fontFamily: mono, color: C.good, fontWeight: '800' }}>+{f.pt}pt</Text>
+                  {ruleOf(f.g) ? <Text style={{ fontFamily: mono, color: C.good, fontWeight: '800', fontSize: 12 }}>組 +{ruleOf(f.g)!.pt}pt</Text> : <Text style={{ fontFamily: mono, color: C.ink3, fontSize: 12 }}>記録のみ</Text>}
                   <Text style={{ fontSize: 18 }}>{locked ? '🔒' : on ? '✅' : '⬜'}</Text>
                 </Pressable>
               );

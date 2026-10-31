@@ -46,6 +46,7 @@ await db.exec(read('0017_ramen_only_items.sql'));
 await db.exec(read('0018_review_items.sql'));
 await db.exec(read('0019_removed_disliked_items.sql'));
 await db.exec(read('0020_rank_names.sql'));
+await db.exec(read('0021_fields_points.sql'));
 
 let failed = 0, passed = 0;
 const ok = (c, name, extra = '') => { c ? passed++ : failed++; console.log(`${c ? 'PASS' : 'FAIL'}  ${name}${c ? '' : '  ' + extra}`); };
@@ -459,9 +460,10 @@ ok(rr2.summary?.richness && rr2.summary.richness.masked === undefined, 'ラー�
   const VB = await newUser('具材閲覧');
   await ramenVisit(VB, { soup: '醤油', rich: 2, thick: '中', firm: '普通', top: '味玉' }); // 自分も入力した → 見える
   const rv = await as(VB.id, async () => (await q('select public.shop_reviews($1) as r', [RS])).rows[0].r);
-  const withTops = rv.items.find((x) => x.items && !x.items.masked && x.items.toppings);
-  ok(!!withTops && /味玉/.test(withTops.items.toppings), '評価一覧: 自分も入力していれば、他の人の具材・トッピングが見える', JSON.stringify(rv.items.map((x) => x.items)));
-  ok(rv.items.every((x) => 'items' in x && 'noodle' in x && !('toppings' in x)), '評価一覧: items グループになった（旧 toppings は無い）');
+  const withTops = rv.items.find((x) => x.toppings && !x.toppings.masked && x.toppings.toppings);
+  ok(!!withTops && /味玉/.test(withTops.toppings.toppings), '評価一覧: 自分もトッピングを入力していれば、他の人のトッピングが見える（見習いから）', JSON.stringify(rv.items.map((x) => x.toppings)));
+  ok(rv.items.every((x) => x.items.masked === true && x.items.reason === 'rank' && x.items.need_rank === 1), '評価一覧: 具材・付け合わせは三級から（見習いは黒塗り）', JSON.stringify(rv.items[0]?.items));
+  ok(rv.items.every((x) => 'items' in x && 'noodle' in x && 'toppings' in x && 'extra' in x), '評価一覧: トッピング・具材・主任の記録のグループがある');
   ok(rv.items.some((x) => x.noodle && !x.noodle.masked ? 'noodle_type' in x.noodle : true), '評価一覧: 麺の種類も返す');
 }
 
@@ -478,6 +480,45 @@ ok(rr2.summary?.richness && rr2.summary.richness.masked === undefined, 'ラー�
   ok((await mk({ removed_items: 'ネギ,海苔', disliked_items: 'きくらげ,にんにく' })) === null, '抜いてもらった具材・嫌いな具材を保存できる');
   ok((await mk({ removed_items: 'ライス' })) !== null, '抜いた具材にも、ご飯などは入れられない');
   ok((await mk({ disliked_items: '餃子' })) !== null, '嫌いな具材にも、餃子などは入れられない');
+}
+
+// ===== 入力項目・ポイントの見直し（0021）=====
+{
+  const mkp = async (u, { visit = {}, dish = {}, score = {} }) => {
+    const v = randomUUID();
+    const vcols = { id: v, shop_id: RS, entered_at: new Date().toISOString(), ...visit };
+    await as(u.id, () => q(`insert into public.visit (${Object.keys(vcols).join(',')}) values (${Object.keys(vcols).map((_, i) => '$' + (i + 1)).join(',')})`, Object.values(vcols)));
+    const dcols = { id: randomUUID(), visit_id: v, name: '醤油ラーメン', ...dish };
+    await as(u.id, () => q(`insert into public.dish (${Object.keys(dcols).join(',')}) values (${Object.keys(dcols).map((_, i) => '$' + (i + 1)).join(',')})`, Object.values(dcols)));
+    const scols = { visit_id: v, satisfaction: 80, ...score };
+    await as(u.id, () => q(`insert into public.visit_score (${Object.keys(scols).join(',')}) values (${Object.keys(scols).map((_, i) => '$' + (i + 1)).join(',')})`, Object.values(scols)));
+    const r = (await as(u.id, () => q('select public.submit_visit($1) as r', [v]))).rows[0].r;
+    return { kinds: r.breakdown.map((x) => x.kind).sort(), total: r.total, r };
+  };
+  const P0 = await newUser('点数見習い'), P1 = await newUser('点数三級'), P4 = await newUser('点数主任');
+  await q('update public.inspector set rank = 1 where id = $1', [P1.id]);
+  await q('update public.inspector set rank = 4 where id = $1', [P4.id]);
+
+  // 見習い: 基本の記録（価格・量・感想5文字以上）とトッピング
+  const a0 = await mkp(P0, { visit: { comment: 'おいしかった' }, dish: { price_yen: 900, volume: 'just_right', soup: '醤油', toppings: '味玉' } });
+  ok(a0.kinds.join() === 'basic_record,dish_card,first_visit_bonus,quick_report,ramen_soup,ramen_toppings', '見習い: 基本の記録・スープ・トッピングで加点される', a0.kinds.join());
+  ok(a0.total === 10 + 8 + 30 + 5 + 8 + 3, '見習い: 合計が表どおり（64）', String(a0.total));
+  const b0 = await mkp(P0, { visit: { comment: 'うまい' }, dish: { price_yen: 900, volume: 'just_right' } });
+  ok(!b0.kinds.includes('basic_record'), '見習い: 感想が5文字未満だと「基本の記録」は付かない', b0.kinds.join());
+  // 見習いが三級の項目を入れても加点されない（階級が足りない）
+  const c0 = await mkp(P0, { visit: { comment: 'おいしかったです', party_size: 2, mood: 'good', hunger_before: 50, fullness_after: 75 }, dish: { price_yen: 900, volume: 'more', base_items: 'ネギ', sides: '高菜' } });
+  ok(!c0.kinds.includes('visit_info') && !c0.kinds.includes('condition') && !c0.kinds.includes('ramen_items') && !c0.kinds.includes('ramen_extras'), '見習い: 三級の組は加点されない', c0.kinds.join());
+
+  // 三級: 状況・体調・具材・付け合わせ
+  const a1 = await mkp(P1, { visit: { party_size: 2, mood: 'good', hunger_before: 25, fullness_after: 75 }, dish: { base_items: 'チャーシュー,ネギ', removed_items: 'にんにく' } });
+  ok(a1.kinds.includes('visit_info') && a1.kinds.includes('condition') && a1.kinds.includes('ramen_items') && a1.kinds.includes('ramen_extras'), '三級: 状況・体調・具材・（抜いた具材で）付け合わせ等が加点される', a1.kinds.join());
+  ok(!a1.kinds.includes('chief_extra') && !a1.kinds.includes('noise_measured'), '三級: 主任の組は付かない');
+
+  // 主任: 推し一杯・価格の表記・来店の目的
+  const a4 = await mkp(P4, { visit: { mood_tags: 'solo' }, dish: { is_pick: true } });
+  ok(a4.kinds.includes('chief_extra'), '主任: 推し一杯・来店の目的で加点される', a4.kinds.join());
+  const b4 = await mkp(P1, { visit: { mood_tags: 'solo' }, dish: { is_pick: true } });
+  ok(!b4.kinds.includes('chief_extra'), '三級: 主任の組は階級が足りず付かない');
 }
 
 // ===== 推し・公開ランキング =====

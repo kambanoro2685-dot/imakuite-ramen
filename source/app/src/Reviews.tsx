@@ -29,8 +29,10 @@ const FORMAT: Record<string, (v: any) => string> = {
   volume: (v) => VOL[v.volume] ?? '—',
   note: (v) => v.comment || '—',
   soup: (v) => v.soup || '—',
+  toppings: (v) => (v.toppings ? String(v.toppings).split(',').join('・') : '—'),
+  extra: (v) => join([v.mood_tags ? `来店の目的:${String(v.mood_tags).split(',').join('・')}` : null, v.is_pick ? '推し一杯' : null, v.tax_included === true ? '税込' : v.tax_included === false ? '税別' : null]),
   noodle: (v) => join([nn(v.richness) ? `濃さ:${RICHNESS[v.richness] ?? v.richness}` : null, v.noodle_thick ? `太さ:${v.noodle_thick}` : null, v.noodle_firm ? `硬さ:${v.noodle_firm}` : null, v.noodle_type ? `種類:${v.noodle_type}` : null, v.kaedama === true ? '替え玉した' : v.kaedama === false ? '替え玉なし' : null]),
-  items: (v) => join([v.base_items ? `具材:${String(v.base_items).split(',').join('・')}` : null, v.toppings ? `トッピング:${String(v.toppings).split(',').join('・')}` : null, v.sides ? `付け合わせ:${String(v.sides).split(',').join('・')}` : null]),
+  items: (v) => join([v.base_items ? `具材:${String(v.base_items).split(',').join('・')}` : null, v.sides ? `付け合わせ:${String(v.sides).split(',').join('・')}` : null]),
   rec: (v) => join([v.would_return === true ? 'また行く' : v.would_return === false ? '行かない' : null, v.would_recommend ? '人にすすめたい' : null]),
   party: (v) => (nn(v.party_size) ? `${v.party_size}人` : '—'),
   mood: (v) => MOOD[v.mood] ?? '—',
@@ -52,9 +54,10 @@ const FORMAT: Record<string, (v: any) => string> = {
 };
 
 const LABELS: [string, string][] = [
-  ['price', '価格'], ['volume', '量'], ['soup', 'スープ'], ['noodle', '濃さ・麺'], ['items', '具材'], ['note', '感想'], ['rec', 'おすすめ'], ['party', '人数'],
-  ['mood', '気分'], ['condition', '体調'], ['clean', '清掃'], ['quiet', '静かさ'], ['wait', '待ち時間'],
-  ['taste', '味'], ['service', '接客'], ['quality', '品質'], ['facility', '設備・支払い'], ['noise', '騒音'],
+  ['price', '価格'], ['volume', '量'], ['soup', 'スープ'], ['toppings', 'トッピング'], ['note', '感想'], ['rec', 'おすすめ'],
+  ['party', '人数'], ['mood', '気分'], ['condition', '体調'], ['quiet', '静かさ'], ['wait', '待ち時間'], ['clean', '清掃'],
+  ['noodle', '濃さ・麺'], ['items', '具材'], ['taste', '味'], ['service', '接客'], ['quality', '品質'], ['facility', '設備・支払い'],
+  ['noise', '騒音'], ['extra', '主任の記録'],
 ];
 
 /** 黒塗り（伏せ字）。理由を小さく添える */
