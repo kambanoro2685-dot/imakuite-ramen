@@ -7,4 +7,4 @@ export const SUPABASE_KEY: string = process.env.EXPO_PUBLIC_SUPABASE_KEY ?? 'sb_
 export const shopUuid = (venueId: number) => `00000000-0000-4000-8000-${String(venueId).padStart(12, '0')}`;
 
 // 画面下に表示して、古いキャッシュのページを見ていないか判別するための番号
-export const BUILD = '2026-10-31-r22';
+export const BUILD = '2026-10-31-r23';

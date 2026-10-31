@@ -47,6 +47,7 @@ await db.exec(read('0018_review_items.sql'));
 await db.exec(read('0019_removed_disliked_items.sql'));
 await db.exec(read('0020_rank_names.sql'));
 await db.exec(read('0021_fields_points.sql'));
+await db.exec(read('0022_mask_rank_only.sql'));
 
 
 let failed = 0, passed = 0;

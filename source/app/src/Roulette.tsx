@@ -9,7 +9,7 @@ import { Credit, RankMix } from './Search';
 import { today, useStore } from './store';
 import { C, mono } from './theme';
 import { Venue, isRamenShop, useVenues, walkMin, walkText } from './venues';
-import ShopReviews from './Reviews';
+import ShopReviews, { ReviewFieldPicker } from './Reviews';
 import { GENRES } from './data';
 import { matchOf } from './match';
 import { Btn, Chip, Chips, Head, Lbl, Muted } from './ui';
@@ -180,7 +180,8 @@ export default function Roulette({ go }: { go: Go }) {
             <Btn kind="ghost" label="引き直す" onPress={spin} style={{ flex: 1 }} />
             <Btn label="ここに行く" onPress={goThere} style={{ flex: 1 }} />
           </View>
-          <ShopReviews key={win.id} shopId={win.id} />
+          <ReviewFieldPicker />
+          <ShopReviews key={win.id} shopId={win.id} fields={S.reviewFields ?? []} />
           <Muted>「ここに行く」で +15pt。帰ってきたら事後評価で さらに +10pt。調査を提出すると、この店があなたの調査マップに追加されます。</Muted>
           <Credit />
         </View>

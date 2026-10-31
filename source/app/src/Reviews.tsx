@@ -3,6 +3,7 @@ import { Image, Text, View } from 'react-native';
 import { friendly } from './account';
 import { RANKS, RICHNESS } from './data';
 import { rankIndexOf, useStore } from './store';
+import { Btn } from './ui';
 import { supabase } from './supabase';
 import { C, font, mono } from './theme';
 import { Card, Chip, Chips, Lbl, Muted } from './ui';
@@ -53,12 +54,43 @@ const FORMAT: Record<string, (v: any) => string> = {
   noise: (v) => (nn(v.noise_db) ? `${v.noise_db}dB` : '—'),
 };
 
-const LABELS: [string, string][] = [
-  ['price', '価格'], ['volume', '量'], ['soup', 'スープ'], ['toppings', 'トッピング'], ['note', '感想'], ['rec', 'おすすめ'],
-  ['party', '人数'], ['mood', '気分'], ['condition', '体調'], ['quiet', '静かさ'], ['wait', '待ち時間'], ['clean', '清掃'],
-  ['noodle', '濃さ・麺'], ['items', '具材'], ['taste', '味'], ['service', '接客'], ['quality', '品質'], ['facility', '設備・支払い'],
-  ['noise', '騒音'], ['extra', '主任の記録'],
+/** 評価の項目（key はサーバの shop_reviews が返すグループ名）。need は見られる階級（0=見習い … 4=主任）。入力できる階級と同じ */
+export const REVIEW_GROUPS: { k: string; l: string; need: number }[] = [
+  { k: 'price', l: '価格', need: 0 }, { k: 'volume', l: '量', need: 0 }, { k: 'soup', l: 'スープ', need: 0 },
+  { k: 'toppings', l: 'トッピング', need: 0 }, { k: 'note', l: '感想', need: 0 }, { k: 'rec', l: 'おすすめ', need: 0 },
+  { k: 'party', l: '人数', need: 1 }, { k: 'mood', l: '気分', need: 1 }, { k: 'condition', l: '体調', need: 1 },
+  { k: 'quiet', l: '静かさ', need: 1 }, { k: 'wait', l: '待ち時間', need: 1 }, { k: 'clean', l: '清掃', need: 1 },
+  { k: 'noodle', l: '濃さ・麺', need: 1 }, { k: 'items', l: '具材', need: 1 }, { k: 'photos', l: '写真', need: 1 },
+  { k: 'taste', l: '味', need: 2 }, { k: 'service', l: '接客', need: 2 },
+  { k: 'quality', l: '品質', need: 3 }, { k: 'facility', l: '設備・支払い', need: 3 },
+  { k: 'noise', l: '騒音', need: 4 }, { k: 'extra', l: '主任の記録', need: 4 },
 ];
+const LABELS: [string, string][] = REVIEW_GROUPS.filter((g) => g.k !== 'photos').map((g) => [g.k, g.l]);
+
+/** 見たい項目を選ぶ（ルーレットの結果などで使う）。自分の階級より上の項目には 🔒 が付き、選ぶと黒塗りで出る */
+export function ReviewFieldPicker() {
+  const { S, update } = useStore();
+  const rankIdx = rankIndexOf(S.pt);
+  const sel = S.reviewFields ?? [];
+  const toggle = (k: string) => update((st) => ({ ...st, reviewFields: sel.includes(k) ? sel.filter((x) => x !== k) : [...sel, k] }));
+  const set = (ks: string[]) => update((st) => ({ ...st, reviewFields: ks }));
+  return (
+    <View style={{ gap: 8 }}>
+      <Lbl>見たい評価の項目を選ぶ</Lbl>
+      <Chips>
+        {REVIEW_GROUPS.map((g) => (
+          <Chip key={g.k} label={`${g.need > rankIdx ? '🔒 ' : ''}${g.l}`} on={sel.includes(g.k)} onPress={() => toggle(g.k)} />
+        ))}
+      </Chips>
+      <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
+        <Btn small kind="ghost" label="見られる項目だけ選ぶ" onPress={() => set(REVIEW_GROUPS.filter((g) => g.need <= rankIdx).map((g) => g.k))} />
+        <Btn small kind="ghost" label="全部選ぶ" onPress={() => set(REVIEW_GROUPS.map((g) => g.k))} />
+        <Btn small kind="ghost" label="すべて外す" onPress={() => set([])} />
+      </View>
+      <Muted>🔒 は、あなたの階級ではまだ見られない項目です。選ぶと、██████（黒塗り）で表示されます。</Muted>
+    </View>
+  );
+}
 
 /** 黒塗り（伏せ字）。理由を小さく添える */
 function Redacted({ m }: { m: Masked }) {
@@ -97,7 +129,7 @@ function Row({ label, node, kind }: { label: string; node: any; kind: string }) 
 
 const SORTS: [string, string][] = [['new', '新しい順'], ['high', '満足度が高い順'], ['low', '満足度が低い順'], ['cheap', '安い順']];
 
-export default function ShopReviews({ shopId }: { shopId: string }) {
+export default function ShopReviews({ shopId, fields }: { shopId: string; /** 表示する項目（REVIEW_GROUPS の key）。省略すると全部 */ fields?: string[] }) {
   const { S, signedIn } = useStore();
   const [sort, setSort] = useState('new');
   const [data, setData] = useState<any>(null);
@@ -181,19 +213,19 @@ export default function ShopReviews({ shopId }: { shopId: string }) {
           <Text style={{ fontWeight: '800', color: C.ink }}>
             {it.dish ?? '（品名なし）'}　<Text style={{ color: C.amber }}>満足度 {it.satisfaction}</Text>
           </Text>
-          {Array.isArray(it.photos) && it.photos.length ? (
+          {(!fields || fields.includes('photos')) && Array.isArray(it.photos) && it.photos.length ? (
             <View style={{ flexDirection: 'row', gap: 6 }}>
               {it.photos.map((u: string) => <Image key={u} source={{ uri: u }} style={{ width: 64, height: 64, borderRadius: 2, borderWidth: 3, borderColor: '#FFFFFF' }} />)}
             </View>
           ) : null}
-          {LABELS.map(([k, l]) => <Row key={k} label={l} node={it[k]} kind={k} />)}
-          {isMasked(it.photos) ? <Row label="写真" node={it.photos} kind="photos_masked" /> : null}
-          <Row label="訂正履歴" node={it.corrections} kind="corrections" />
+          {LABELS.filter(([k]) => !fields || fields.includes(k)).map(([k, l]) => <Row key={k} label={l} node={it[k]} kind={k} />)}
+          {isMasked(it.photos) && (!fields || fields.includes('photos')) ? <Row label="写真" node={it.photos} kind="photos_masked" /> : null}
+          {!fields ? <Row label="訂正履歴" node={it.corrections} kind="corrections" /> : null}
         </Card>
       ))}
 
       {data.items.length === 0 && data.scope !== 'locked' ? <Muted>表示できる評価がまだありません。</Muted> : null}
-      <Muted>██████ は伏せ字です。階級が足りない項目か、あなたがまだ一度も入力していない項目です。入力するほど、他の人の同じ項目が読めるようになります。</Muted>
+      <Muted>██████ は伏せ字です。あなたの階級では、まだ見られない項目です（階級が上がると見えるようになります）。</Muted>
     </View>
   );
 }
