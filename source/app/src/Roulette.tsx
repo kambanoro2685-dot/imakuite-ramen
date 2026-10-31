@@ -10,10 +10,10 @@ import { today, useStore } from './store';
 import { C, mono } from './theme';
 import { Venue, isRamenShop, useVenues, walkMin, walkText } from './venues';
 import ShopReviews from './Reviews';
+import { GENRES } from './data';
 import { matchOf } from './match';
 import { Btn, Chip, Chips, Head, Lbl, Muted } from './ui';
 
-const GENRE_OPTS = ['すべて', 'ラーメン', '麺類', '寿司', '和食', '中華', '焼肉・焼鳥', 'カレー', '洋食', '居酒屋', 'カフェ'];
 const WEIGHTS = ['好みを優先', '推しを優先', '未訪問を優先', '近さを優先', '完全ランダム'] as const;
 type W = (typeof WEIGHTS)[number];
 const RADIUS = [500, 1000, 1500, 3000];
@@ -46,6 +46,11 @@ export default function Roulette({ go }: { go: Go }) {
     return (1 + (matchOf(v, S.profile).pct ?? 25) / 20) * (S.visited.includes(v.id) ? 1 : 1.5); // 相性0%→1、100%→6
   };
 
+  // 系統の選択肢: いま候補にあるラーメンの店の系統だけ（系統が分からない店は「その他」）
+  const genreOpts = useMemo(() => {
+    const have = new Set(venues.filter(isRamenShop).map((v) => v.g));
+    return ['すべて', ...GENRES.filter((x) => have.has(x)), ...(have.has('その他') ? ['その他'] : [])];
+  }, [venues]);
   const pool = useMemo(
     () => venues.filter((v) => isRamenShop(v) && v.dist <= radius && (g === 'すべて' || v.g === g)),
     [venues, radius, g],
@@ -106,7 +111,7 @@ export default function Roulette({ go }: { go: Go }) {
       <Head title="ルーレット" sub={unlimited ? '無制限（ランク特典）' : `残り${Math.max(0, 3 - spinsToday)}回`} />
       <View style={{ gap: 7 }}>
         <Lbl>系統</Lbl>
-        <Chips>{GENRE_OPTS.map((x) => <Chip key={x} label={x} on={g === x} onPress={() => setG(x)} />)}</Chips>
+        <Chips>{genreOpts.map((x) => <Chip key={x} label={x} on={g === x} onPress={() => setG(x)} />)}</Chips>
       </View>
       <View style={{ gap: 7 }}>
         <Lbl>{base}から</Lbl>
