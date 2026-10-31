@@ -43,6 +43,7 @@ await db.exec(read('0014_noodle_type.sql'));
 await db.exec(read('0015_toppings_top.sql'));
 await db.exec(read('0016_shop_source.sql'));
 await db.exec(read('0017_ramen_only_items.sql'));
+await db.exec(read('0018_review_items.sql'));
 
 let failed = 0, passed = 0;
 const ok = (c, name, extra = '') => { c ? passed++ : failed++; console.log(`${c ? 'PASS' : 'FAIL'}  ${name}${c ? '' : '  ' + extra}`); };
@@ -393,7 +394,7 @@ await ramenVisit(RV, { soup: '味噌', rich: 2, thick: '太', firm: '普通' });
 await q('update public.inspector set rank = 1 where id = $1', [RV.id]);
 const rr2 = await as(RV.id, async () => (await q('select public.shop_reviews($1) as r', [RS])).rows[0].r);
 const it0 = rr2.items[0];
-ok(it0.soup.soup && it0.noodle.richness !== undefined && it0.toppings.masked === true && it0.toppings.reason === 'rank', 'ラーメン: トッピングは一等未満だと黒塗り', JSON.stringify(it0.toppings));
+ok(it0.soup.soup && it0.noodle.richness !== undefined && it0.items.masked === true && it0.items.reason === 'input', 'ラーメン: 具材・トッピングは、自分が入力していないと黒塗り', JSON.stringify(it0.items));
 ok(rr2.summary?.richness && rr2.summary.richness.masked === undefined, 'ラーメン: 濃さの平均が出る（三等・入力済み）', JSON.stringify(rr2.summary));
 
 // ===== 麺の種類 =====
@@ -449,6 +450,17 @@ ok(rr2.summary?.richness && rr2.summary.richness.masked === undefined, 'ラー�
   ok((await mk({ sides: 'ギョーザ' })) !== null, '餃子（ギョーザ）は保存できない');
   ok((await mk({ sides: 'ごはん' })) !== null, 'ごはんは保存できない');
   ok((await mk({ toppings: '味玉' }, '餃子定食')) !== null, '品名にも定食・餃子は入れられない');
+}
+
+// ===== 評価一覧: 具材・トッピング・付け合わせ =====
+{
+  const VB = await newUser('具材閲覧');
+  await ramenVisit(VB, { soup: '醤油', rich: 2, thick: '中', firm: '普通', top: '味玉' }); // 自分も入力した → 見える
+  const rv = await as(VB.id, async () => (await q('select public.shop_reviews($1) as r', [RS])).rows[0].r);
+  const withTops = rv.items.find((x) => x.items && !x.items.masked && x.items.toppings);
+  ok(!!withTops && /味玉/.test(withTops.items.toppings), '評価一覧: 自分も入力していれば、他の人の具材・トッピングが見える', JSON.stringify(rv.items.map((x) => x.items)));
+  ok(rv.items.every((x) => 'items' in x && 'noodle' in x && !('toppings' in x)), '評価一覧: items グループになった（旧 toppings は無い）');
+  ok(rv.items.some((x) => x.noodle && !x.noodle.masked ? 'noodle_type' in x.noodle : true), '評価一覧: 麺の種類も返す');
 }
 
 // ===== 推し・公開ランキング =====

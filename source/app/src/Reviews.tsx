@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Image, Text, View } from 'react-native';
 import { friendly } from './account';
-import { RANKS } from './data';
+import { RANKS, RICHNESS } from './data';
 import { rankIndexOf, useStore } from './store';
 import { supabase } from './supabase';
 import { C, font, mono } from './theme';
@@ -28,6 +28,9 @@ const FORMAT: Record<string, (v: any) => string> = {
   price: (v) => (nn(v.price_yen) ? `¥${Number(v.price_yen).toLocaleString()}` : '—'),
   volume: (v) => VOL[v.volume] ?? '—',
   note: (v) => v.comment || '—',
+  soup: (v) => v.soup || '—',
+  noodle: (v) => join([nn(v.richness) ? `濃さ:${RICHNESS[v.richness] ?? v.richness}` : null, v.noodle_thick ? `太さ:${v.noodle_thick}` : null, v.noodle_firm ? `硬さ:${v.noodle_firm}` : null, v.noodle_type ? `種類:${v.noodle_type}` : null, v.kaedama === true ? '替え玉した' : v.kaedama === false ? '替え玉なし' : null]),
+  items: (v) => join([v.base_items ? `具材:${String(v.base_items).split(',').join('・')}` : null, v.toppings ? `トッピング:${String(v.toppings).split(',').join('・')}` : null, v.sides ? `付け合わせ:${String(v.sides).split(',').join('・')}` : null]),
   rec: (v) => join([v.would_return === true ? 'また行く' : v.would_return === false ? '行かない' : null, v.would_recommend ? '人にすすめたい' : null]),
   party: (v) => (nn(v.party_size) ? `${v.party_size}人` : '—'),
   mood: (v) => MOOD[v.mood] ?? '—',
@@ -49,7 +52,7 @@ const FORMAT: Record<string, (v: any) => string> = {
 };
 
 const LABELS: [string, string][] = [
-  ['price', '価格'], ['volume', '量'], ['note', '感想'], ['rec', 'おすすめ'], ['party', '人数'],
+  ['price', '価格'], ['volume', '量'], ['soup', 'スープ'], ['noodle', '濃さ・麺'], ['items', '具材'], ['note', '感想'], ['rec', 'おすすめ'], ['party', '人数'],
   ['mood', '気分'], ['condition', '体調'], ['clean', '清掃'], ['quiet', '静かさ'], ['wait', '待ち時間'],
   ['taste', '味'], ['service', '接客'], ['quality', '品質'], ['facility', '設備・支払い'], ['noise', '騒音'],
 ];
