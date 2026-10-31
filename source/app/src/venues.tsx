@@ -21,6 +21,8 @@ export type Venue = {
   thick: string | null;
   /** いちばん多い麺の種類（ちぢれ・ストレート・平打ち） */
   ntype: string | null;
+  /** 口コミで多いトッピング（上位3つ） */
+  toppings: string[] | null;
   /** 基準点（現在地 or 岡山駅）からの距離[m] */
   dist: number;
 };
@@ -82,7 +84,7 @@ export function VenueProvider({ children }: { children: React.ReactNode }) {
     const list: Venue[] = ((data as any[]) ?? []).map((r) => ({
       id: r.id, n: r.name, g: r.genre ?? 'その他', lat: r.lat, lng: r.lng, url: r.url ?? null,
       reviews: r.review_count ?? null, ranks: r.rank_counts ?? null,
-      soup: r.soup_top ?? null, rich: r.richness_avg == null ? null : Number(r.richness_avg), thick: r.thick_top ?? null, ntype: r.type_top ?? null, dist: r.distance_m ?? 0,
+      soup: r.soup_top ?? null, rich: r.richness_avg == null ? null : Number(r.richness_avg), thick: r.thick_top ?? null, ntype: r.type_top ?? null, toppings: r.toppings_top ?? null, dist: r.distance_m ?? 0,
     }));
     list.forEach((v) => seen.current.set(v.id, v));
     setVenues(list);

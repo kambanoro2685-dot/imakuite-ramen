@@ -44,6 +44,8 @@ export type Profile = {
   thick: string;
   /** 麺の種類の好み（ちぢれ・ストレート・平打ち）。未設定は空 */
   ntype: string;
+  /** 好きなトッピング（複数）。古い保存データには無いので、使うときは ?? [] にする */
+  toppings: string[];
 };
 export type State = {
   uid: string;
@@ -83,7 +85,7 @@ export function freshState(): State {
     uid: makeId(),
     onboarded: false,
     account: null,
-    profile: { nickname: '', nationality: '日本', gender: '', age: '', allergies: '', favorites: [], rich: null, thick: '', ntype: '' },
+    profile: { nickname: '', nationality: '日本', gender: '', age: '', allergies: '', favorites: [], rich: null, thick: '', ntype: '', toppings: [] },
     terms: null,
     mission: null,
     pt: 0,

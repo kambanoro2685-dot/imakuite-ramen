@@ -40,6 +40,7 @@ await db.exec(read('0011_shop_rank_mix.sql'));
 await db.exec(read('0012_oshi_ranking.sql'));
 await db.exec(read('0013_ramen.sql'));
 await db.exec(read('0014_noodle_type.sql'));
+await db.exec(read('0015_toppings_top.sql'));
 
 let failed = 0, passed = 0;
 const ok = (c, name, extra = '') => { c ? passed++ : failed++; console.log(`${c ? 'PASS' : 'FAIL'}  ${name}${c ? '' : '  ' + extra}`); };
@@ -405,6 +406,20 @@ ok(rr2.summary?.richness && rr2.summary.richness.masked === undefined, 'ラー�
   const s2 = await as(A.id, () => q('select * from public.search_shops(34.671, 133.921, 300)'));
   ok(s2.rows.find((r) => r.id === RS).type_top === 'ちぢれ', '麺の種類: 3件以上でいちばん多い種類が出る');
   ok((await err(q("update public.dish set noodle_type = 'ぐにゃぐにゃ' where id = (select id from public.dish limit 1)"))) !== null, '麺の種類は決まった値だけ');
+}
+
+// ===== トッピングの集計 =====
+{
+  const s0 = await as(A.id, () => q('select * from public.search_shops(34.671, 133.921, 300)'));
+  ok(s0.rows.find((r) => r.id === RS).toppings_top === null || Array.isArray(s0.rows.find((r) => r.id === RS).toppings_top), 'トッピング: 列が返る');
+  const vs = (await q('select v.id, v.inspector_id from public.visit v where v.shop_id = $1 order by v.submitted_at', [RS])).rows;
+  const tops = ['味玉,チャーシュー', '味玉,メンマ', '味玉,ネギ,チャーシュー'];
+  for (let k = 0; k < 3; k++) await q('update public.dish set toppings = $1 where visit_id = $2', [tops[k], vs[k].id]);
+  const s1 = await as(A.id, () => q('select * from public.search_shops(34.671, 133.921, 300)'));
+  const row = s1.rows.find((r) => r.id === RS);
+  ok(Array.isArray(row.toppings_top) && row.toppings_top[0] === '味玉' && row.toppings_top[1] === 'チャーシュー' && row.toppings_top.length <= 3, 'トッピング: 3件以上で、多い順に上位3つが出る', JSON.stringify(row.toppings_top));
+  const sNone = (await as(A.id, () => q('select * from public.search_shops(34.6667, 133.9188, 1500)'))).rows.find((r) => r.review_count === null);
+  ok(sNone.toppings_top === null, 'トッピング: 3件未満は出さない');
 }
 
 // ===== 推し・公開ランキング =====

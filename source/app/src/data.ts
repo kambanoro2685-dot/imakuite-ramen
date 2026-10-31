@@ -5,6 +5,7 @@ export const GENRES = ['醤油', '味噌', '塩', '豚骨', '家系', '二郎系
 export const RICHNESS = ['あっさり', 'やや軽め', 'ふつう', 'こってり', '超こってり'];
 export const THICKNESS = ['細', '中', '太', '極太'];
 export const NOODLE_TYPES = ['ちぢれ', 'ストレート', '平打ち'];
+export const TOPPINGS = ['チャーシュー', '味玉', 'メンマ', 'ネギ', '海苔', 'もやし', 'ほうれん草', '背脂', 'にんにく', '辛味噌'];
 export const FIRMNESS = ['固め', '普通', '柔らかめ'];
 
 export type FieldDef = { k: string; n: string; pt: number; rank: number; hint?: string } & (
@@ -62,7 +63,7 @@ export const FIELDS: FieldDef[] = [
   { k: 'texture', n: '品質｜麺の食感', pt: 3, rank: 3, type: 'pick', opts: GOOD3 },
   { k: 'temperature', n: '品質｜スープの温度', pt: 3, rank: 3, type: 'pick', opts: GOOD3 },
   { k: 'presentation', n: '品質｜見た目', pt: 3, rank: 3, type: 'pick', opts: GOOD3, hint: '4項目そろえると +10pt' },
-  { k: 'toppings', n: 'トッピング', pt: 3, rank: 3, type: 'multi', opts: ['チャーシュー', '味玉', 'メンマ', 'ネギ', '海苔', 'もやし', 'ほうれん草', '背脂', 'にんにく', '辛味噌'], hint: '1つ以上選ぶと +3pt' },
+  { k: 'toppings', n: 'トッピング', pt: 3, rank: 3, type: 'multi', opts: TOPPINGS, hint: '1つ以上選ぶと +3pt' },
   { k: 'crowd', n: '混み具合', pt: 2, rank: 3, type: 'pick', opts: ['空いている', 'ふつう', 'やや混み', '満席', '行列'] },
   { k: 'pay', n: '支払い方法', pt: 2, rank: 3, type: 'multi', opts: ['現金', '交通系IC', 'クレジット', 'QR'] },
   { k: 'smoke', n: '喫煙', pt: 2, rank: 3, type: 'pick', opts: ['禁煙', '喫煙可', '分煙'], hint: '混み具合・支払い・喫煙で +6pt' },

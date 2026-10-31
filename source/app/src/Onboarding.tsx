@@ -4,7 +4,7 @@ import { addPasskey, friendly, loginWithPasskey, loginWithRecoveryCode, passkeyS
 import { CHECKBOX_TEXT, TERMS_VERSION } from './terms';
 import { TermsSheet } from './TermsSheet';
 import { BUILD } from './config';
-import { GENRES, NOODLE_TYPES, RICHNESS, THICKNESS } from './data';
+import { GENRES, NOODLE_TYPES, RICHNESS, THICKNESS, TOPPINGS } from './data';
 import { useStore } from './store';
 import { pushProfile } from './sync';
 import { C } from './theme';
@@ -24,6 +24,8 @@ export default function Onboarding() {
   const [rich, setRich] = useState<number | null>(S.profile.rich);
   const [thick, setThick] = useState(S.profile.thick);
   const [ntype, setNtype] = useState(S.profile.ntype);
+  const [tops, setTops] = useState<string[]>(S.profile.toppings ?? []);
+  const toggleTop = (t: string) => setTops((x) => (x.includes(t) ? x.filter((y) => y !== t) : [...x, t]));
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
   const [agree, setAgree] = useState(false);
@@ -36,7 +38,7 @@ export default function Onboarding() {
   const [rcode, setRcode] = useState('');
 
   const toggle = (g: string) => setFavs((f) => (f.includes(g) ? f.filter((x) => x !== g) : [...f, g]));
-  const profile = () => ({ nickname: nick.trim(), nationality: nat.trim(), gender, age, allergies: allergy.trim(), favorites: favs, rich, thick, ntype });
+  const profile = () => ({ nickname: nick.trim(), nationality: nat.trim(), gender, age, allergies: allergy.trim(), favorites: favs, rich, thick, ntype, toppings: tops });
 
   const detail = (e: unknown) => {
     const x = e as any;
@@ -218,6 +220,16 @@ export default function Onboarding() {
           ))}
         </Chips>
         <Muted>ちぢれ麺はスープをよく持ち上げ、ストレートは喉ごしがよく、平打ちはもちもちです。</Muted>
+      </View>
+
+      <View style={{ gap: 7 }}>
+        <Lbl>②-5 好きなトッピング（複数・任意）</Lbl>
+        <Chips>
+          {TOPPINGS.map((t) => (
+            <Chip key={t} label={t} on={tops.includes(t)} onPress={() => toggleTop(t)} />
+          ))}
+        </Chips>
+        <Muted>口コミで人気のトッピングが合う店ほど、相性が上がります。</Muted>
       </View>
 
       <View style={{ gap: 7 }}>
