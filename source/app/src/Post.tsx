@@ -293,7 +293,21 @@ export default function PostScreen({ go }: { go: Go }) {
                   {Number(D.vals[f.k] || 0) ? `¥${Number(D.vals[f.k]).toLocaleString()}` : '未設定'}
                 </Text>
                 <Steps value={Number(D.vals[f.k] || 0)} min={0} max={10000} step={100} onChange={(v) => setVal(f.k, v ? String(v) : '')} />
-                <Muted>＋ / − で100円ずつ。価格ダイヤル。</Muted>
+                <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                  <Btn small kind="ghost" label="−10円" onPress={() => setVal(f.k, String(Math.max(0, Number(D.vals[f.k] || 0) - 10) || ''))} />
+                  <Btn small kind="ghost" label="＋10円" onPress={() => setVal(f.k, String(Math.min(99990, Number(D.vals[f.k] || 0) + 10)))} />
+                  <View style={{ width: 130 }}>
+                    <Input
+                      value={D.vals[f.k] ?? ''}
+                      onChangeText={(t) => setVal(f.k, t.replace(/[^0-9]/g, '').replace(/^0+/, '').slice(0, 5))}
+                      placeholder="金額を直接入力"
+                      keyboardType="number-pad"
+                      inputMode="numeric"
+                    />
+                  </View>
+                  <Text style={{ color: C.ink2 }}>円</Text>
+                </View>
+                <Muted>＋ / − で100円ずつ。「−10円」「＋10円」で10円ずつ。数字を直接入れると、1円単位でも入力できます（例：税込 1078）。</Muted>
               </View>
             ) : f.type === 'photo' ? (
               <View style={{ gap: 8 }}>
