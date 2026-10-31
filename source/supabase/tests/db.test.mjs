@@ -48,6 +48,7 @@ await db.exec(read('0019_removed_disliked_items.sql'));
 await db.exec(read('0020_rank_names.sql'));
 await db.exec(read('0021_fields_points.sql'));
 await db.exec(read('0022_mask_rank_only.sql'));
+await db.exec(read('0023_review_basic_scope.sql'));
 
 let failed = 0, passed = 0;
 const ok = (c, name, extra = '') => { c ? passed++ : failed++; console.log(`${c ? 'PASS' : 'FAIL'}  ${name}${c ? '' : '  ' + extra}`); };
@@ -275,7 +276,7 @@ const setRank = (n) => q('update public.inspector set rank = $2 where id = $1', 
 
 // 見習い・その店に行ったことがない → 読めない
 let rv = await reviews();
-ok(rv.scope === 'locked' && rv.items.length === 0 && rv.total === 4, '見習い: 行っていない店の評価は読めない（件数だけ）', JSON.stringify(rv).slice(0, 120));
+ok(rv.scope === 'basic' && rv.items.length === 4 && rv.total === 4 && rv.items[0].price.masked !== true && rv.items[0].clean.masked === true, '見習い: 行っていない店の評価も読める（自分の階級の項目だけ。上の項目は黒塗り）', JSON.stringify(rv).slice(0, 120));
 
 // その店に自分も投稿（価格とコメントだけ入力）
 const myv = randomUUID();
@@ -285,7 +286,7 @@ await q("insert into public.dish (id, visit_id, name, price_yen) values ($1, $2,
 
 rv = await reviews();
 const it = rv.items[0];
-ok(rv.scope === 'own_shop' && rv.items.length === 4, '見習い: 自分が行った店は読める', JSON.stringify(rv).slice(0, 100));
+ok(rv.scope === 'basic' && rv.items.length === 4, '見習い: 自分が行った店も読める', JSON.stringify(rv).slice(0, 100));
 ok(it.price.masked !== true && it.note.masked !== true, '見習い: 自分が入力した項目（価格・感想）は見える');
 ok(it.volume.masked !== true, '見習い: 自分の階級で入力できる項目は、自分が入力していなくても見える（量）');
 ok(it.clean.masked && it.clean.reason === 'rank' && it.clean.need_rank === 1, '見習い: 階級が足りない項目は黒塗り（reason=rank, need_rank=1）');
@@ -393,7 +394,7 @@ ok((await err(q("insert into public.dish (id, visit_id, name, noodle_thick) valu
 // 他の調査官のラーメン項目の黒塗り
 const RV = await newUser('麺閲覧');
 const rr = await as(RV.id, async () => (await q('select public.shop_reviews($1) as r', [RS])).rows[0].r);
-ok(rr.scope === 'locked', 'ラーメン: 見習いは自分が行っていない店のレビューを読めない');
+ok(rr.scope === 'basic', 'ラーメン: 見習いは行っていない店のレビューも読める（自分の階級の項目だけ）');
 await ramenVisit(RV, { soup: '味噌', rich: 2, thick: '太', firm: '普通' });
 await q('update public.inspector set rank = 1 where id = $1', [RV.id]);
 const rr2 = await as(RV.id, async () => (await q('select public.shop_reviews($1) as r', [RS])).rows[0].r);

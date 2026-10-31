@@ -58,7 +58,8 @@ export type State = {
   /** ルーレットで「ここに行く」を押した店（今日の指令）。24時間、地図に載る */
   /** アカウントなし（この端末だけ）で追加した店。サーバには送らない */
   /** ルーレットの結果で表示する、他の調査官の評価の項目（REVIEW_GROUPS の key） */
-  reviewFields: string[];
+  /** null = 自動（自分の階級で見られる項目すべて）。選び直すと、その一覧になる */
+  reviewFields: string[] | null;
   localVenues: { id: string; n: string; g: string; lat: number; lng: number }[];
   mission: { id: string; n: string; g: string; lat: number; lng: number; at: number; sample?: boolean } | null;
   pt: number;
@@ -91,7 +92,7 @@ export function freshState(): State {
     account: null,
     profile: { nickname: '', nationality: '日本', gender: '', age: '', allergies: '', favorites: [], rich: null, thick: '', ntype: '', toppings: [] },
     terms: null,
-    reviewFields: ['price', 'soup', 'noodle', 'toppings', 'items', 'note'],
+    reviewFields: null,
     localVenues: [],
     mission: null,
     pt: 0,
@@ -156,6 +157,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           // 後から増えた入力項目（具材・トッピング・付け合わせ）は、古い保存データでも最初から使えるようにする
           const addedKeys = ['photo', 'price', 'amount', 'note', 'soup', 'rec', 'toppings', 'base', 'sides', 'removed', 'disliked'].filter((k) => loaded.palette?.[k] === undefined);
           const palette = { ...base.palette, ...(loaded.palette ?? {}), ...Object.fromEntries(addedKeys.map((k) => [k, true])) };
+          // 前の版が最初に入れていた選択のままなら、自動（見られる項目すべて）にもどす
+          const oldDefault = JSON.stringify(['price', 'soup', 'noodle', 'toppings', 'items', 'note']);
+          if (JSON.stringify(migrated.reviewFields) === oldDefault) migrated.reviewFields = null as any;
           setS({ ...base, ...migrated, palette, account, profile: { ...base.profile, ...loaded.profile, } });
         }
         setSignedIn(!!sess?.data?.session);

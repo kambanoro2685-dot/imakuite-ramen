@@ -181,7 +181,7 @@ export default function Roulette({ go }: { go: Go }) {
             <Btn label="ここに行く" onPress={goThere} style={{ flex: 1 }} />
           </View>
           <ReviewFieldPicker />
-          <ShopReviews key={win.id} shopId={win.id} fields={S.reviewFields ?? []} />
+          <ShopReviews key={win.id} shopId={win.id} fields={S.reviewFields} />
           <Muted>「ここに行く」で +15pt。帰ってきたら事後評価で さらに +10pt。調査を提出すると、この店があなたの調査マップに追加されます。</Muted>
           <Credit />
         </View>

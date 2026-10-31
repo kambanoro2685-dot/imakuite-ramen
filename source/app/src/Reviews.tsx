@@ -71,9 +71,10 @@ const LABELS: [string, string][] = REVIEW_GROUPS.filter((g) => g.k !== 'photos')
 export function ReviewFieldPicker() {
   const { S, update } = useStore();
   const rankIdx = rankIndexOf(S.pt);
-  const sel = S.reviewFields ?? [];
+  const visible = REVIEW_GROUPS.filter((g) => g.need <= rankIdx).map((g) => g.k);
+  const sel = S.reviewFields ?? visible; // 未選択（自動）のときは、見られる項目すべて
   const toggle = (k: string) => update((st) => ({ ...st, reviewFields: sel.includes(k) ? sel.filter((x) => x !== k) : [...sel, k] }));
-  const set = (ks: string[]) => update((st) => ({ ...st, reviewFields: ks }));
+  const set = (ks: string[] | null) => update((st) => ({ ...st, reviewFields: ks }));
   return (
     <View style={{ gap: 8 }}>
       <Lbl>見たい評価の項目を選ぶ</Lbl>
@@ -83,7 +84,7 @@ export function ReviewFieldPicker() {
         ))}
       </Chips>
       <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
-        <Btn small kind="ghost" label="見られる項目だけ選ぶ" onPress={() => set(REVIEW_GROUPS.filter((g) => g.need <= rankIdx).map((g) => g.k))} />
+        <Btn small kind="ghost" label="見られる項目だけ（自動）" onPress={() => set(null)} />
         <Btn small kind="ghost" label="全部選ぶ" onPress={() => set(REVIEW_GROUPS.map((g) => g.k))} />
         <Btn small kind="ghost" label="すべて外す" onPress={() => set([])} />
       </View>
@@ -129,7 +130,7 @@ function Row({ label, node, kind }: { label: string; node: any; kind: string }) 
 
 const SORTS: [string, string][] = [['new', '新しい順'], ['high', '満足度が高い順'], ['low', '満足度が低い順'], ['cheap', '安い順']];
 
-export default function ShopReviews({ shopId, fields }: { shopId: string; /** 表示する項目（REVIEW_GROUPS の key）。省略すると全部 */ fields?: string[] }) {
+export default function ShopReviews({ shopId, fields }: { shopId: string; /** 表示する項目（REVIEW_GROUPS の key）。省略すると全部。null は、自分の階級で見られる項目すべて */ fields?: string[] | null }) {
   const { S, signedIn } = useStore();
   const [sort, setSort] = useState('new');
   const [data, setData] = useState<any>(null);
@@ -164,11 +165,14 @@ export default function ShopReviews({ shopId, fields }: { shopId: string; /** �
   const vr: number = data.viewer_rank ?? rankIdx;
   const scopeText: Record<string, string> = {
     locked: 'この店を調査（投稿）すると、他の調査官の評価が読めるようになります。',
+    basic: `${RANKS[vr].n}は、どの店でも新しい順に${data.limit}件まで読めます（自分の階級で見られる項目だけ。それより上の項目は黒塗り）。`,
     own_shop: `${RANKS[vr].n}は、自分が調査した店の評価だけ読めます（新しい順 ${data.limit}件まで）。`,
     '30days': `${RANKS[vr].n}は、直近30日の評価が読めます（${data.limit}件まで）。`,
     all: `${RANKS[vr].n}は、全期間の評価が読めます。並べ替えもできます。`,
   };
   const hidden = Math.max(0, data.total - data.shown);
+  // 表示する項目: null（自動）なら、自分の階級で見られる項目すべて
+  const shownFields = fields === null ? REVIEW_GROUPS.filter((g) => g.need <= vr).map((g) => g.k) : fields;
   const sm = data.summary ?? {};
 
   return (
@@ -213,14 +217,14 @@ export default function ShopReviews({ shopId, fields }: { shopId: string; /** �
           <Text style={{ fontWeight: '800', color: C.ink }}>
             {it.dish ?? '（品名なし）'}　<Text style={{ color: C.amber }}>満足度 {it.satisfaction}</Text>
           </Text>
-          {(!fields || fields.includes('photos')) && Array.isArray(it.photos) && it.photos.length ? (
+          {(!shownFields || shownFields.includes('photos')) && Array.isArray(it.photos) && it.photos.length ? (
             <View style={{ flexDirection: 'row', gap: 6 }}>
               {it.photos.map((u: string) => <Image key={u} source={{ uri: u }} style={{ width: 64, height: 64, borderRadius: 2, borderWidth: 3, borderColor: '#FFFFFF' }} />)}
             </View>
           ) : null}
-          {LABELS.filter(([k]) => !fields || fields.includes(k)).map(([k, l]) => <Row key={k} label={l} node={it[k]} kind={k} />)}
-          {isMasked(it.photos) && (!fields || fields.includes('photos')) ? <Row label="写真" node={it.photos} kind="photos_masked" /> : null}
-          {!fields ? <Row label="訂正履歴" node={it.corrections} kind="corrections" /> : null}
+          {LABELS.filter(([k]) => !shownFields || shownFields.includes(k)).map(([k, l]) => <Row key={k} label={l} node={it[k]} kind={k} />)}
+          {isMasked(it.photos) && (!shownFields || shownFields.includes('photos')) ? <Row label="写真" node={it.photos} kind="photos_masked" /> : null}
+          {!shownFields ? <Row label="訂正履歴" node={it.corrections} kind="corrections" /> : null}
         </Card>
       ))}
 
