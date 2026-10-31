@@ -30,7 +30,7 @@ export function friendly(e: unknown): string {
   if (/oshi_not_found/.test(msg)) return 'その調査官は見つからないか、公開されていません。';
   if (/oshi_self/.test(msg)) return '自分自身は推せません。';
   if (/oshi_limit/.test(msg)) return '推しは20人までです。だれかを解除してから登録してください。';
-  if (/not_registered/.test(msg)) return '店を追加するには、アカウント登録（ログイン）が必要です。';
+  if (/not_registered/.test(msg)) return 'サーバに、あなたの調査官の登録が見つかりません。マイページからログアウトして、もう一度ログインか登録をしてください。';
   if (/invalid_name/.test(msg)) return '店名は1〜80文字で入れてください。';
   if (/invalid_location/.test(msg)) return '現在地を取得できませんでした。';
   if (/rate_limited/.test(msg)) return '店の追加は、1日20件までです。明日またお試しください。';

@@ -51,11 +51,18 @@ export default function PostScreen({ go }: { go: Go }) {
   const picked = D.venue ? byId(D.venue) : undefined;
   const venueShown = picked && !near.some((v) => v.id === picked.id) ? [picked, ...near] : near;
 
+  // ログインの状態: 端末だけで使っている（アカウントなし）／アカウントはあるがログインが切れている
+  const needLogin = !S.account
+    ? '店を追加するには、アカウントが必要です。いまは「この端末だけ」で使っています。'
+    : 'ログインの有効期限が切れています。ログインし直してください。';
+  // 最初の画面（新規登録／ログイン）にもどる。この端末の記録（投稿・好み）は残る
+  const toLogin = () => update((st) => ({ ...st, onboarded: false }));
+
   // 候補にない店（ラーメン専門店でない店・新しい店）を、いまの場所に追加する
   const addShop = async () => {
     const name = vq.trim();
     if (!name || adding) return;
-    if (!S.account || !signedIn) return setAddErr('店を追加するには、アカウント登録（ログイン）が必要です。');
+    if (!S.account || !signedIn) return setAddErr(needLogin);
     if (!addAsk) return setAddErr(''), setAddAsk(true);
     setAdding(true);
     setAddErr('');
@@ -168,7 +175,18 @@ export default function PostScreen({ go }: { go: Go }) {
                 <Btn small label={adding ? '追加中…' : addAsk ? '追加する（現在地を使います）' : `＋ 「${vq.trim()}」を現在地の店として追加`} onPress={addShop} />
                 {addAsk && !adding ? <Btn small kind="ghost" label="やめる" onPress={() => setAddAsk(false)} /> : null}
               </View>
-              {addErr ? <Text selectable style={{ color: C.crit, fontWeight: '700' }}>{addErr}</Text> : null}
+              {!S.account || !signedIn ? (
+                <View style={{ gap: 6, backgroundColor: C.amberSoft, padding: 10, borderRadius: 3 }}>
+                  <Text style={{ color: C.ink, fontWeight: '800' }}>{needLogin}</Text>
+                  <Muted>
+                    {!S.account
+                      ? '「アカウントを登録する」を押すと、最初の画面にもどります（新しく登録）。この端末の投稿の記録は残りますが、ポイントは登録後から数え直しになります。'
+                      : '「ログインし直す」を押すと、最初の画面にもどります。パスキーか復旧コードでログインしてください。この端末の記録は残ります。'}
+                  </Muted>
+                  <Btn small label={!S.account ? 'アカウントを登録する' : 'ログインし直す'} onPress={toLogin} style={{ alignSelf: 'flex-start' }} />
+                </View>
+              ) : null}
+              {addErr && (S.account && signedIn) ? <Text selectable style={{ color: C.crit, fontWeight: '700' }}>{addErr}</Text> : null}
             </View>
           ) : null}
           <Muted>
