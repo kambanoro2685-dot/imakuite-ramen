@@ -17,18 +17,19 @@ export function matchOf(v: Venue, p: Profile): Match {
   const parts: { w: number; s: number }[] = [];
   const fav = p.favorites;
   if (fav.length) {
-    if (v.soup && fav.includes(v.soup)) parts.push({ w: 0.45, s: 1 });
-    else if (v.g !== 'その他' && fav.includes(v.g)) parts.push({ w: 0.45, s: 1 });
-    else if (v.soup || v.g !== 'その他') parts.push({ w: 0.45, s: 0.2 }); // 好みの系統でなくても、0%にはしない
+    if (v.soup && fav.includes(v.soup)) parts.push({ w: 0.4, s: 1 });
+    else if (v.g !== 'その他' && fav.includes(v.g)) parts.push({ w: 0.4, s: 1 });
+    else if (v.soup || v.g !== 'その他') parts.push({ w: 0.4, s: 0.2 }); // 好みの系統でなくても、0%にはしない
   }
-  if (p.rich != null && v.rich != null) parts.push({ w: 0.35, s: Math.max(0, 1 - Math.abs(v.rich - p.rich) / 4) });
+  if (p.rich != null && v.rich != null) parts.push({ w: 0.3, s: Math.max(0, 1 - Math.abs(v.rich - p.rich) / 4) });
   if (p.thick && v.thick) {
     const o = ['細', '中', '太', '極太'];
     const gap = Math.abs(o.indexOf(v.thick) - o.indexOf(p.thick));
-    parts.push({ w: 0.2, s: gap === 0 ? 1 : gap === 1 ? 0.5 : 0 });
+    parts.push({ w: 0.15, s: gap === 0 ? 1 : gap === 1 ? 0.5 : 0 });
   }
+  if (p.ntype && v.ntype) parts.push({ w: 0.15, s: p.ntype === v.ntype ? 1 : 0 });
   if (!parts.length) return { pct: null, basis: 'none' };
   const w = parts.reduce((a, x) => a + x.w, 0);
   const pct = Math.round((parts.reduce((a, x) => a + x.w * x.s, 0) / w) * 100);
-  return { pct, basis: v.rich != null || v.thick != null || v.soup ? 'reviews' : 'name' };
+  return { pct, basis: v.rich != null || v.thick != null || v.ntype != null || v.soup ? 'reviews' : 'name' };
 }

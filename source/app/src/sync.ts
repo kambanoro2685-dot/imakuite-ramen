@@ -72,6 +72,7 @@ export async function syncPost(post: Post, save: (s: Sync) => void): Promise<voi
     if (v.richness && RICH[v.richness] !== undefined) row.richness = RICH[v.richness];
     if (v.thick) row.noodle_thick = v.thick;
     if (v.firm) row.noodle_firm = v.firm;
+    if (v.ntype) row.noodle_type = v.ntype;
     if (v.kaedama === '替え玉した') row.kaedama = true;
     else if (v.kaedama === 'しなかった') row.kaedama = false;
     const tops = list(v.toppings).join(',');

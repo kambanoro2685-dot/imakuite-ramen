@@ -141,7 +141,7 @@ export function VenueDetail({ id, go }: { id: string; go: Go }) {
   const { setD } = useDraft();
   const { byId, center, oshiOf } = useVenues();
   const post0 = S.posts.find((p) => p.venue === id && p.lat != null);
-  const v: Venue | undefined = byId(id) ?? (post0 ? { id, n: post0.venueName, g: post0.genre ?? 'その他', lat: post0.lat!, lng: post0.lng!, url: null, reviews: null, ranks: null, soup: null, rich: null, thick: null, dist: 0 } : undefined);
+  const v: Venue | undefined = byId(id) ?? (post0 ? { id, n: post0.venueName, g: post0.genre ?? 'その他', lat: post0.lat!, lng: post0.lng!, url: null, reviews: null, ranks: null, soup: null, rich: null, thick: null, ntype: null, dist: 0 } : undefined);
   if (!v) {
     return (
       <ScrollView contentContainerStyle={{ padding: 16, gap: 12 }}>
@@ -170,7 +170,7 @@ export function VenueDetail({ id, go }: { id: string; go: Go }) {
         {matchTag(v, S.profile)}
         {v.soup ? <Tag t={`口コミで多いスープ: ${v.soup}`} /> : null}
         {v.rich != null ? <Tag t={`濃さ ${v.rich}/4`} /> : null}
-        {v.thick ? <Tag t={`麺: ${v.thick}`} /> : null}
+        {v.thick || v.ntype ? <Tag t={`麺: ${[v.thick, v.ntype].filter(Boolean).join('・')}`} /> : null}
         {oshiOf[v.id] ? <Tag t={`💗 推しが調査: ${oshiOf[v.id].join('・')}`} kind="new" /> : null}
       </View>
 

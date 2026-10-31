@@ -42,6 +42,8 @@ export type Profile = {
   /** ラーメンの好み: こってり度（0=あっさり … 4=こってり）と、麺の太さ。未設定は null / 空 */
   rich: number | null;
   thick: string;
+  /** 麺の種類の好み（ちぢれ・ストレート・平打ち）。未設定は空 */
+  ntype: string;
 };
 export type State = {
   uid: string;
@@ -81,7 +83,7 @@ export function freshState(): State {
     uid: makeId(),
     onboarded: false,
     account: null,
-    profile: { nickname: '', nationality: '日本', gender: '', age: '', allergies: '', favorites: [], rich: null, thick: '' },
+    profile: { nickname: '', nationality: '日本', gender: '', age: '', allergies: '', favorites: [], rich: null, thick: '', ntype: '' },
     terms: null,
     mission: null,
     pt: 0,

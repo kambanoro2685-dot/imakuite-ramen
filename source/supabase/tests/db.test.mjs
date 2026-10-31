@@ -39,6 +39,7 @@ await db.exec(read('0010_terms_acceptance.sql'));
 await db.exec(read('0011_shop_rank_mix.sql'));
 await db.exec(read('0012_oshi_ranking.sql'));
 await db.exec(read('0013_ramen.sql'));
+await db.exec(read('0014_noodle_type.sql'));
 
 let failed = 0, passed = 0;
 const ok = (c, name, extra = '') => { c ? passed++ : failed++; console.log(`${c ? 'PASS' : 'FAIL'}  ${name}${c ? '' : '  ' + extra}`); };
@@ -391,6 +392,20 @@ const rr2 = await as(RV.id, async () => (await q('select public.shop_reviews($1)
 const it0 = rr2.items[0];
 ok(it0.soup.soup && it0.noodle.richness !== undefined && it0.toppings.masked === true && it0.toppings.reason === 'rank', 'ラーメン: トッピングは一等未満だと黒塗り', JSON.stringify(it0.toppings));
 ok(rr2.summary?.richness && rr2.summary.richness.masked === undefined, 'ラーメン: 濃さの平均が出る（三等・入力済み）', JSON.stringify(rr2.summary));
+
+// ===== 麺の種類 =====
+{
+  const s = await as(A.id, () => q('select * from public.search_shops(34.671, 133.921, 300)'));
+  const row = s.rows.find((r) => r.id === RS);
+  ok(row.type_top === null, '麺の種類: 口コミに無いうちは null');
+  for (const u of [R0, R1, R2]) {
+    const v = (await q("select v.id from public.visit v where v.inspector_id = $1 and v.shop_id = $2", [u.id, RS])).rows[0].id;
+    await q("update public.dish set noodle_type = 'ちぢれ' where visit_id = $1", [v]);
+  }
+  const s2 = await as(A.id, () => q('select * from public.search_shops(34.671, 133.921, 300)'));
+  ok(s2.rows.find((r) => r.id === RS).type_top === 'ちぢれ', '麺の種類: 3件以上でいちばん多い種類が出る');
+  ok((await err(q("update public.dish set noodle_type = 'ぐにゃぐにゃ' where id = (select id from public.dish limit 1)"))) !== null, '麺の種類は決まった値だけ');
+}
 
 // ===== 推し・公開ランキング =====
 const F1 = await newUser('ファン一'), F2 = await newUser('ファン二'), HK = await newUser('ヒーロー'), HD = await newUser('ひみつ');

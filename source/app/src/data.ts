@@ -4,6 +4,7 @@ export const GENRES = ['醤油', '味噌', '塩', '豚骨', '家系', '二郎系
 /** こってり度（0=あっさり … 4=こってり）。好みの登録と、投稿の「濃さ」で使う */
 export const RICHNESS = ['あっさり', 'やや軽め', 'ふつう', 'こってり', '超こってり'];
 export const THICKNESS = ['細', '中', '太', '極太'];
+export const NOODLE_TYPES = ['ちぢれ', 'ストレート', '平打ち'];
 export const FIRMNESS = ['固め', '普通', '柔らかめ'];
 
 export type FieldDef = { k: string; n: string; pt: number; rank: number; hint?: string } & (
@@ -41,6 +42,7 @@ export const FIELDS: FieldDef[] = [
   { k: 'mood', n: 'その時の気分', pt: 3, rank: 1, type: 'faces', opts: [['😪', '疲れ'], ['😌', '穏やか'], ['🙂', '普通'], ['😆', '上機嫌'], ['🔥', '絶好調']] },
   { k: 'richness', n: '濃さ（こってり度）', pt: 3, rank: 1, type: 'pick', opts: RICHNESS, hint: '濃さ・麺の太さ・硬さの3つで +8pt' },
   { k: 'thick', n: '麺の太さ', pt: 3, rank: 1, type: 'pick', opts: THICKNESS },
+  { k: 'ntype', n: '麺の種類（ちぢれ・ストレート・平打ち）', pt: 0, rank: 1, type: 'pick', opts: NOODLE_TYPES, hint: '好みのマッチングに使われます（ポイントはなし）' },
   { k: 'firm', n: '麺の硬さ', pt: 2, rank: 1, type: 'pick', opts: FIRMNESS },
   { k: 'kaedama', n: '替え玉', pt: 0, rank: 1, type: 'pick', opts: ['替え玉した', 'しなかった', '替え玉なし（つけ麺など）'] },
   { k: 'full', n: '食後の満腹度', pt: 3, rank: 1, type: 'range', labels: ['', 'まだ入る', 'ほどよい', '満足', 'お腹いっぱい', '食べすぎ'], hint: '入店前の空腹と合わせて +6pt' },

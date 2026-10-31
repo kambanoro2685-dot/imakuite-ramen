@@ -4,7 +4,7 @@ import { addPasskey, friendly, loginWithPasskey, loginWithRecoveryCode, passkeyS
 import { CHECKBOX_TEXT, TERMS_VERSION } from './terms';
 import { TermsSheet } from './TermsSheet';
 import { BUILD } from './config';
-import { GENRES, RICHNESS, THICKNESS } from './data';
+import { GENRES, NOODLE_TYPES, RICHNESS, THICKNESS } from './data';
 import { useStore } from './store';
 import { pushProfile } from './sync';
 import { C } from './theme';
@@ -23,6 +23,7 @@ export default function Onboarding() {
   const [favs, setFavs] = useState<string[]>(S.profile.favorites);
   const [rich, setRich] = useState<number | null>(S.profile.rich);
   const [thick, setThick] = useState(S.profile.thick);
+  const [ntype, setNtype] = useState(S.profile.ntype);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
   const [agree, setAgree] = useState(false);
@@ -35,7 +36,7 @@ export default function Onboarding() {
   const [rcode, setRcode] = useState('');
 
   const toggle = (g: string) => setFavs((f) => (f.includes(g) ? f.filter((x) => x !== g) : [...f, g]));
-  const profile = () => ({ nickname: nick.trim(), nationality: nat.trim(), gender, age, allergies: allergy.trim(), favorites: favs, rich, thick });
+  const profile = () => ({ nickname: nick.trim(), nationality: nat.trim(), gender, age, allergies: allergy.trim(), favorites: favs, rich, thick, ntype });
 
   const detail = (e: unknown) => {
     const x = e as any;
@@ -207,6 +208,16 @@ export default function Onboarding() {
             <Chip key={t} label={t} on={thick === t} onPress={() => setThick(thick === t ? '' : t)} />
           ))}
         </Chips>
+      </View>
+
+      <View style={{ gap: 7 }}>
+        <Lbl>②-4 麺の種類の好み（任意）</Lbl>
+        <Chips>
+          {NOODLE_TYPES.map((t) => (
+            <Chip key={t} label={t} on={ntype === t} onPress={() => setNtype(ntype === t ? '' : t)} />
+          ))}
+        </Chips>
+        <Muted>ちぢれ麺はスープをよく持ち上げ、ストレートは喉ごしがよく、平打ちはもちもちです。</Muted>
       </View>
 
       <View style={{ gap: 7 }}>
