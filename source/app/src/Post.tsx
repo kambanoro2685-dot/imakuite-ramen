@@ -79,7 +79,7 @@ export default function PostScreen({ go }: { go: Go }) {
   };
 
   const submit = () => {
-    if (!D.venue) return showToast('店を選んでください。周辺の候補から1件タップします。');
+    if (!D.venue) return showToast('店を選んでください。「① 調査対象」の候補を1件タップします（選ぶと赤くなります）。');
     if (!D.dish.trim()) return showToast('「食べた一杯の品名」だけは必要です。記録の芯になります。');
     if (!D.sat) return showToast('満足度をひとつ選んでください。');
     const v = byId(D.venue);
@@ -128,6 +128,11 @@ export default function PostScreen({ go }: { go: Go }) {
           <Muted>
             基準: {center.source === 'gps' ? '現在地' : '岡山駅'}（近い店から表示。半径{radius / 1000}km）{radius > 3000 ? '　※ 近くに店が少ないため、範囲を広げています。' : ''}
           </Muted>
+          {picked ? (
+            <Text style={{ color: C.good, fontWeight: '800' }}>✓ 選んだ店: {picked.n}（もう一度押すと解除）</Text>
+          ) : (
+            <Text style={{ color: C.crit, fontWeight: '800' }}>⚠ 店がまだ選ばれていません。下の候補を1件タップしてください。</Text>
+          )}
           <Chips>
             {venueShown.map((v) => (
               <Chip
