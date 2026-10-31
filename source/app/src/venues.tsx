@@ -33,6 +33,8 @@ export type Center = { lat: number; lng: number; source: 'gps' | 'default' };
 export const DEFAULT_CENTER: Center = { lat: 34.6666, lng: 133.9183, source: 'default' };
 
 export const walkMin = (m: number) => Math.max(1, Math.round(m / 80));
+/** 近い店は「徒歩N分」、遠い店は「約N.Nkm」 */
+export const walkText = (m: number) => (m <= 2500 ? `徒歩${walkMin(m)}分` : `約${(m / 1000).toFixed(1)}km`);
 
 type Ctx = {
   venues: Venue[];
@@ -40,6 +42,8 @@ type Ctx = {
   loading: boolean;
   error: string;
   locating: boolean;
+  /** いま使っている検索の半径[m]。近くに店が少ないときは、自動で広げる */
+  radius: number;
   reload: () => Promise<void>;
   useMyLocation: () => Promise<void>;
   /** 基準を岡山駅（対象エリアの中心）にもどす */
@@ -58,6 +62,7 @@ export function VenueProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [locating, setLocating] = useState(false);
   const [error, setError] = useState('');
+  const [radius, setRadius] = useState(3000);
   const seen = useRef(new Map<string, Venue>());
   const { S } = useStore();
   const [oshiOf, setOshiOf] = useState<Record<string, string[]>>({});
@@ -75,15 +80,24 @@ export function VenueProvider({ children }: { children: React.ReactNode }) {
   const load = useCallback(async (c: Center) => {
     setLoading(true);
     setError('');
-    const { data, error: e } = await supabase.rpc('search_shops', {
-      p_lat: c.lat, p_lng: c.lng, p_radius_m: 3000, p_limit: 300,
-    });
-    if (e) {
-      setError(friendly(e));
-      setLoading(false);
-      return;
+    // まず半径3km。店が少ない（6件未満）ときは、8km → 20km と広げて、近い順に候補を出す
+    let rows: any[] = [];
+    let used = 3000;
+    for (const r of [3000, 8000, 20000]) {
+      const { data, error: e } = await supabase.rpc('search_shops', {
+        p_lat: c.lat, p_lng: c.lng, p_radius_m: r, p_limit: 300,
+      });
+      if (e) {
+        setError(friendly(e));
+        setLoading(false);
+        return;
+      }
+      rows = (data as any[]) ?? [];
+      used = r;
+      if (rows.length >= 6) break;
     }
-    const list: Venue[] = ((data as any[]) ?? []).map((r) => ({
+    setRadius(used);
+    const list: Venue[] = rows.map((r) => ({
       id: r.id, n: r.name, g: r.genre ?? 'その他', lat: r.lat, lng: r.lng, url: r.url ?? null,
       reviews: r.review_count ?? null, ranks: r.rank_counts ?? null,
       soup: r.soup_top ?? null, rich: r.richness_avg == null ? null : Number(r.richness_avg), thick: r.thick_top ?? null, ntype: r.type_top ?? null, toppings: r.toppings_top ?? null, dist: r.distance_m ?? 0,
@@ -117,7 +131,7 @@ export function VenueProvider({ children }: { children: React.ReactNode }) {
   const byId = useCallback((id: string) => seen.current.get(id), []);
 
   return (
-    <VenueCtx.Provider value={{ venues, center, loading, error, locating, reload, useMyLocation, resetCenter, byId, oshiOf, reloadOshi }}>
+    <VenueCtx.Provider value={{ venues, center, loading, error, locating, reload, useMyLocation, resetCenter, radius, byId, oshiOf, reloadOshi }}>
       {children}
     </VenueCtx.Provider>
   );

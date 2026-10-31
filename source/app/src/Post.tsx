@@ -5,7 +5,7 @@ import { photoSupported, processPhoto } from './photo';
 import { uploadPhoto } from './storage';
 import { DraftPhoto, useDraft } from './draft';
 import { FIELDS, RANKS, TIER_TITLES } from './data';
-import { useVenues, walkMin } from './venues';
+import { useVenues, walkMin, walkText } from './venues';
 import { Go } from './nav';
 import { uuid4 } from './supabase';
 import { Post, rankIndexOf, useStore } from './store';
@@ -40,7 +40,7 @@ export default function PostScreen({ go }: { go: Go }) {
   const rankIdx = rankIndexOf(S.pt);
   const active = FIELDS.filter((f) => f.rank <= rankIdx && S.palette[f.k]);
   const pts = draftPoints(D, S.palette, S.visited, rankIdx);
-  const { venues, byId, center, loading, error, locating, useMyLocation, resetCenter } = useVenues();
+  const { venues, byId, center, loading, error, locating, useMyLocation, resetCenter, radius } = useVenues();
   const [vq, setVq] = React.useState('');
   const nq = vq.normalize('NFKC').toLowerCase().replace(/\s+/g, '');
   const near = (nq ? venues.filter((v) => v.n.normalize('NFKC').toLowerCase().includes(nq)) : venues).slice(0, 6);
@@ -126,13 +126,13 @@ export default function PostScreen({ go }: { go: Go }) {
           <Lbl>① 調査対象（どこで）</Lbl>
           <Input value={vq} onChangeText={setVq} placeholder="店名で探す（近くの店が候補に出ます）" />
           <Muted>
-            基準: {center.source === 'gps' ? '現在地' : '岡山駅'}（半径3kmの、近い店から表示します）
+            基準: {center.source === 'gps' ? '現在地' : '岡山駅'}（近い店から表示。半径{radius / 1000}km）{radius > 3000 ? '　※ 近くに店が少ないため、範囲を広げています。' : ''}
           </Muted>
           <Chips>
             {venueShown.map((v) => (
               <Chip
                 key={v.id}
-                label={`${v.n} · 徒歩${walkMin(v.dist)}分`}
+                label={`${v.n} · ${walkText(v.dist)}`}
                 on={D.venue === v.id}
                 onPress={() => setD((x) => ({ ...x, venue: x.venue === v.id ? null : v.id }))}
               />

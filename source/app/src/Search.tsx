@@ -10,7 +10,7 @@ import { useStore } from './store';
 import { C, mono } from './theme';
 import { visitedPins, pinLabel } from './pins';
 import ShopReviews from './Reviews';
-import { Venue, useVenues, walkMin } from './venues';
+import { Venue, useVenues, walkMin, walkText } from './venues';
 import { Btn, Card, Chip, Chips, Head, Input, Lbl, Muted, s } from './ui';
 
 const SORTS = ['おすすめ順', '相性順', '近い順', '未訪問だけ', '推しの店だけ'] as const;
@@ -55,7 +55,7 @@ export const Credit = () => <Muted>地図・店舗データ: © OpenStreetMap co
 
 export function Search({ go }: { go: Go }) {
   const { S } = useStore();
-  const { venues, center, loading, error, locating, useMyLocation, resetCenter, byId, oshiOf } = useVenues();
+  const { venues, center, loading, error, locating, useMyLocation, resetCenter, byId, oshiOf, radius } = useVenues();
   const [g, setG] = useState('すべて');
   const [sort, setSort] = useState<Sort>('おすすめ順');
   const [q, setQ] = useState('');
@@ -88,7 +88,7 @@ export function Search({ go }: { go: Go }) {
       <Head title="店をさがす" sub={loading ? '読み込み中…' : `${list.length} 件`} />
 
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-        <Muted>基準: {base}（半径3km）</Muted>
+        <Muted>基準: {base}（半径{radius / 1000}km）</Muted>
         <Btn small kind="ghost" label={locating ? '取得中…' : center.source === 'gps' ? '📍 現在地を更新' : '📍 現在地にする'} onPress={useMyLocation} />
       </View>
       {error ? <Text selectable style={{ color: C.crit, fontWeight: '700' }}>{error}</Text> : null}
@@ -118,7 +118,7 @@ export function Search({ go }: { go: Go }) {
         <Pressable key={v.id} onPress={() => go('venue', v.id)} style={[s.card, { gap: 6 }]}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}>
             <Text style={{ fontSize: 16, fontWeight: '800', color: C.ink, flexShrink: 1 }}>{v.n}</Text>
-            <Text style={{ fontFamily: mono, fontSize: 12, color: C.ink3 }}>{base}から 徒歩{walkMin(v.dist)}分</Text>
+            <Text style={{ fontFamily: mono, fontSize: 12, color: C.ink3 }}>{base}から {walkText(v.dist)}</Text>
           </View>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
             <Tag t={v.g} />
@@ -164,7 +164,7 @@ export function VenueDetail({ id, go }: { id: string; go: Go }) {
       <Head title={v.n} sub={v.g} />
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
         <Tag t={v.g} />
-        <Tag t={`${base}から 徒歩${walkMin(v.dist)}分（約${v.dist.toLocaleString()}m）`} />
+        <Tag t={`${base}から ${walkText(v.dist)}（約${v.dist.toLocaleString()}m）`} />
         <Tag t={v.reviews ? `${v.reviews + mine.length}人が評価` : '調査待ち'} kind={v.reviews ? 'cnt' : undefined} />
         {!S.visited.includes(v.id) ? <Tag t="未訪問 +30pt" kind="new" /> : null}
         {matchTag(v, S.profile)}

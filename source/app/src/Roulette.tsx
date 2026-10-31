@@ -8,7 +8,7 @@ import { visitedPins, pinLabel } from './pins';
 import { Credit, RankMix } from './Search';
 import { today, useStore } from './store';
 import { C, mono } from './theme';
-import { Venue, useVenues, walkMin } from './venues';
+import { Venue, useVenues, walkMin, walkText } from './venues';
 import ShopReviews from './Reviews';
 import { matchOf } from './match';
 import { Btn, Chip, Chips, Head, Lbl, Muted } from './ui';
@@ -139,7 +139,7 @@ export default function Roulette({ go }: { go: Go }) {
               }}
             >
               <Text style={{ fontWeight: '700', color: C.ink }}>{v.n}</Text>
-              <Text style={{ fontSize: 11.5, color: C.ink3 }}>{v.g} · 徒歩{walkMin(v.dist)}分</Text>
+              <Text style={{ fontSize: 11.5, color: C.ink3 }}>{v.g} · {walkText(v.dist)}</Text>
             </View>
           );
         })}
@@ -152,7 +152,7 @@ export default function Roulette({ go }: { go: Go }) {
         <View style={{ backgroundColor: C.amberSoft, borderRadius: 3, borderWidth: 2, borderColor: C.crit, borderStyle: 'dashed', padding: 14, gap: 8 }}>
           <Text style={{ fontFamily: mono, fontSize: 11, color: C.crit, fontWeight: '800' }}>RESULT ／ 本日の指令</Text>
           <Text style={{ fontSize: 22, fontWeight: '800', color: C.ink }}>{win.n}</Text>
-          <Muted>{win.g} ／ {base}から 徒歩{walkMin(win.dist)}分（約{win.dist.toLocaleString()}m）{S.visited.includes(win.id) ? '' : ' ／ 未訪問'}</Muted>
+          <Muted>{win.g} ／ {base}から {walkText(win.dist)}（約{win.dist.toLocaleString()}m）{S.visited.includes(win.id) ? '' : ' ／ 未訪問'}</Muted>
           {(() => { const m = matchOf(win, S.profile); return m.pct == null ? null : <Text style={{ color: C.good, fontWeight: '800' }}>あなたとの相性 {m.pct}%{m.basis === 'name' ? '（店名から推定）' : ''}</Text>; })()}
           {oshiOf[win.id] ? <Text style={{ color: C.crit, fontWeight: '800' }}>💗 推しの {oshiOf[win.id].join('・')} が調査した店</Text> : null}
           {win.ranks ? <RankMix ranks={win.ranks} big /> : <Muted>調査した人の階級: まだ3件未満のため表示できません（調査待ち）</Muted>}

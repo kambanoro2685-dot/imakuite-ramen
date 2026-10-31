@@ -8,7 +8,7 @@ import { Credit } from './Search';
 import { useSamples } from './sample';
 import { useStore } from './store';
 import { C, mono } from './theme';
-import { useVenues, walkMin } from './venues';
+import { useVenues, walkMin, walkText } from './venues';
 import { Btn, Card, Chip, Chips, Head, Lbl, Muted } from './ui';
 
 const DAY = 24 * 3600e3;
@@ -46,7 +46,7 @@ export default function MapScreen({ go }: { go: Go }) {
   const info =
     selPin ? { id: selPin.id, n: selPin.n, g: selPin.g, lat: selPin.lat, lng: selPin.lng, note: `${selPin.count}回調査 ／ 最後の満足度 ${selPin.lastSat}` }
     : sel && mission && sel === mission.id ? { id: mission.id, n: mission.n, g: mission.g, lat: mission.lat, lng: mission.lng, note: '今日の指令（ルーレットで決めた店）' }
-    : selVenue ? { id: selVenue.id, n: selVenue.n, g: selVenue.g, lat: selVenue.lat, lng: selVenue.lng, note: `${base}から 徒歩${walkMin(selVenue.dist)}分 ／ 未調査` }
+    : selVenue ? { id: selVenue.id, n: selVenue.n, g: selVenue.g, lat: selVenue.lat, lng: selVenue.lng, note: `${base}から ${walkText(selVenue.dist)} ／ 未調査` }
     : null;
 
   return (

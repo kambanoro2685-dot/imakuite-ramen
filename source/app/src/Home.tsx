@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { matchOf } from './match';
 import { ScrollView, Text, View } from 'react-native';
 import { useDraft } from './draft';
-import { useVenues, walkMin } from './venues';
+import { useVenues, walkMin, walkText } from './venues';
 import { Go } from './nav';
 import { useStore } from './store';
 import { C, mono } from './theme';
@@ -90,7 +90,7 @@ export default function Home({ go }: { go: Go }) {
           <Lbl>あなたの好みに合う未訪問のラーメン店</Lbl>
           <Text style={{ fontSize: 15, fontWeight: '800', color: C.ink }}>{pick.n}</Text>
           {oshiOf[pick.id] ? <Muted>💗 推しの {oshiOf[pick.id].join('・')} が調査した店</Muted> : null}
-          <Muted>相性 {matchOf(pick, S.profile).pct}% ／ {pick.g} ／ {center.source === 'gps' ? '現在地' : '岡山駅'}から徒歩{walkMin(pick.dist)}分 ／ 初訪問で +30pt</Muted>
+          <Muted>相性 {matchOf(pick, S.profile).pct}% ／ {pick.g} ／ {center.source === 'gps' ? '現在地' : '岡山駅'}から{walkText(pick.dist)} ／ 初訪問で +30pt</Muted>
           <Btn small kind="ghost" label="この店を見る" onPress={() => go('venue', pick.id)} style={{ alignSelf: 'flex-start' }} />
         </Card>
       ) : null}
