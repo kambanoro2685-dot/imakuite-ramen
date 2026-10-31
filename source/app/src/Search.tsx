@@ -55,7 +55,7 @@ export const Credit = () => <Muted>地図・店舗データ: © OpenStreetMap co
 
 export function Search({ go }: { go: Go }) {
   const { S } = useStore();
-  const { venues, center, loading, error, locating, useMyLocation, reload, byId, oshiOf } = useVenues();
+  const { venues, center, loading, error, locating, useMyLocation, resetCenter, byId, oshiOf } = useVenues();
   const [g, setG] = useState('すべて');
   const [sort, setSort] = useState<Sort>('おすすめ順');
   const [q, setQ] = useState('');
@@ -96,7 +96,7 @@ export function Search({ go }: { go: Go }) {
         <Card>
           <Text style={{ color: C.ink, fontWeight: '800' }}>この周辺には、まだ店舗データがありません。</Text>
           <Muted>対応エリアは、いまは岡山市北区・中心部（岡山駅周辺）です。</Muted>
-          <Btn small kind="ghost" label="岡山駅周辺にもどす" onPress={() => reload()} />
+          <Btn small kind="ghost" label="岡山駅周辺にもどす" onPress={resetCenter} />
         </Card>
       ) : null}
 

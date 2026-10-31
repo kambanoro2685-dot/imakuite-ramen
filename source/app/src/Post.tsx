@@ -40,9 +40,9 @@ export default function PostScreen({ go }: { go: Go }) {
   const rankIdx = rankIndexOf(S.pt);
   const active = FIELDS.filter((f) => f.rank <= rankIdx && S.palette[f.k]);
   const pts = draftPoints(D, S.palette, S.visited, rankIdx);
-  const { venues, byId } = useVenues();
+  const { venues, byId, center, loading, error, locating, useMyLocation, resetCenter } = useVenues();
   const [vq, setVq] = React.useState('');
-  const nq = vq.normalize('NFKC').toLowerCase().replace(/s+/g, '');
+  const nq = vq.normalize('NFKC').toLowerCase().replace(/\s+/g, '');
   const near = (nq ? venues.filter((v) => v.n.normalize('NFKC').toLowerCase().includes(nq)) : venues).slice(0, 6);
   const picked = D.venue ? byId(D.venue) : undefined;
   const venueShown = picked && !near.some((v) => v.id === picked.id) ? [picked, ...near] : near;
@@ -125,6 +125,9 @@ export default function PostScreen({ go }: { go: Go }) {
         <View style={{ gap: 7 }}>
           <Lbl>① 調査対象（どこで）</Lbl>
           <Input value={vq} onChangeText={setVq} placeholder="店名で探す（近くの店が候補に出ます）" />
+          <Muted>
+            基準: {center.source === 'gps' ? '現在地' : '岡山駅'}（半径3kmの、近い店から表示します）
+          </Muted>
           <Chips>
             {venueShown.map((v) => (
               <Chip
@@ -135,6 +138,20 @@ export default function PostScreen({ go }: { go: Go }) {
               />
             ))}
           </Chips>
+          {error ? <Text selectable style={{ color: C.crit, fontWeight: '700' }}>{error}</Text> : null}
+          {loading && venues.length === 0 ? <Muted>近くの店を読み込み中…</Muted> : null}
+          {!loading && !error && venues.length === 0 ? (
+            <View style={{ gap: 8 }}>
+              <Text style={{ color: C.ink, fontWeight: '800' }}>この周辺には、まだ店のデータがありません。</Text>
+              <Muted>対応エリアは、いまは岡山市中心部（岡山駅の周辺）です。現在地がエリアの外だと、候補が出ません。</Muted>
+              <Btn small label="岡山駅周辺の店を出す" onPress={resetCenter} style={{ alignSelf: 'flex-start' }} />
+            </View>
+          ) : null}
+          {!loading && venues.length > 0 && nq && near.length === 0 ? <Muted>「{vq}」に合う店が、この周辺にありません。別の言葉で探してください。</Muted> : null}
+          <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
+            {center.source === 'gps' ? <Btn small kind="ghost" label="岡山駅周辺にする" onPress={resetCenter} /> : null}
+            <Btn small kind="ghost" label={locating ? '取得中…' : center.source === 'gps' ? '📍 現在地を更新' : '📍 現在地にする'} onPress={useMyLocation} />
+          </View>
         </View>
 
         <View style={{ gap: 7 }}>

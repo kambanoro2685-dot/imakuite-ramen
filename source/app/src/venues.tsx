@@ -42,6 +42,8 @@ type Ctx = {
   locating: boolean;
   reload: () => Promise<void>;
   useMyLocation: () => Promise<void>;
+  /** 基準を岡山駅（対象エリアの中心）にもどす */
+  resetCenter: () => void;
   byId: (id: string) => Venue | undefined;
   /** 推しが調査した店: shop.id → 行った推しのコードネーム */
   oshiOf: Record<string, string[]>;
@@ -110,10 +112,12 @@ export function VenueProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const resetCenter = useCallback(() => setCenter(DEFAULT_CENTER), []);
+
   const byId = useCallback((id: string) => seen.current.get(id), []);
 
   return (
-    <VenueCtx.Provider value={{ venues, center, loading, error, locating, reload, useMyLocation, byId, oshiOf, reloadOshi }}>
+    <VenueCtx.Provider value={{ venues, center, loading, error, locating, reload, useMyLocation, resetCenter, byId, oshiOf, reloadOshi }}>
       {children}
     </VenueCtx.Provider>
   );
