@@ -155,7 +155,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
             posts: (loaded.posts ?? []).map((p) => ({ ...p, venue: fix(p.venue) })),
           };
           // 後から増えた入力項目（具材・トッピング・付け合わせ）は、古い保存データでも最初から使えるようにする
-          const addedKeys = ['photo', 'price', 'amount', 'note', 'soup', 'rec', 'toppings', 'base', 'sides', 'removed', 'disliked'].filter((k) => loaded.palette?.[k] === undefined);
+          const addedKeys = ['photo', 'price', 'amount', 'note', 'soup', 'rec', 'toppings', 'kaedama', 'base', 'sides', 'removed', 'disliked'].filter((k) => loaded.palette?.[k] === undefined);
           const palette = { ...base.palette, ...(loaded.palette ?? {}), ...Object.fromEntries(addedKeys.map((k) => [k, true])) };
           // 前の版が最初に入れていた選択のままなら、自動（見られる項目すべて）にもどす
           const oldDefault = JSON.stringify(['price', 'soup', 'noodle', 'toppings', 'items', 'note']);

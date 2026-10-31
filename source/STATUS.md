@@ -14,11 +14,16 @@
 
 ## まだのこと
 
-1. **GitHub の新リポジトリと公開**（下記）。この環境の権限判定で、リポジトリ作成が拒否されました。
+1. （完了）GitHub の新リポジトリ作成と公開。
 2. 公開後の、実機（パスキー登録・投稿）での確認。
 3. 利用規約・プライバシーの弁護士確認（草案のまま）。
 
-## 公開の手順（リポジトリを作ったあと）
+## 公開先（完了）
+
+- リポジトリ: https://github.com/kambanoro2685-dot/imakuite-ramen（Pages は master の直下）
+- 公開URL: https://kambanoro2685-dot.github.io/imakuite-ramen/
+
+## 公開の手順（更新するとき・参考）
 
 1. GitHub で `kambanoro2685-dot/imakuite-ramen` を作る（公開、空でよい。Pages 用）。
 2. `app/dist/` の中身をそのリポジトリの `docs/` か `gh-pages` に置き、Pages を有効にする（`app.json` の baseUrl は `/imakuite-ramen`）。

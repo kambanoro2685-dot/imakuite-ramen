@@ -32,7 +32,8 @@ const FORMAT: Record<string, (v: any) => string> = {
   soup: (v) => v.soup || '—',
   toppings: (v) => (v.toppings ? String(v.toppings).split(',').join('・') : '—'),
   extra: (v) => join([v.mood_tags ? `来店の目的:${String(v.mood_tags).split(',').join('・')}` : null, v.is_pick ? '推し一杯' : null, v.tax_included === true ? '税込' : v.tax_included === false ? '税別' : null]),
-  noodle: (v) => join([nn(v.richness) ? `濃さ:${RICHNESS[v.richness] ?? v.richness}` : null, v.noodle_thick ? `太さ:${v.noodle_thick}` : null, v.noodle_firm ? `硬さ:${v.noodle_firm}` : null, v.noodle_type ? `種類:${v.noodle_type}` : null, v.kaedama === true ? '替え玉した' : v.kaedama === false ? '替え玉なし' : null]),
+  noodle: (v) => join([nn(v.richness) ? `濃さ:${RICHNESS[v.richness] ?? v.richness}` : null, v.noodle_thick ? `太さ:${v.noodle_thick}` : null, v.noodle_firm ? `硬さ:${v.noodle_firm}` : null, v.noodle_type ? `種類:${v.noodle_type}` : null]),
+  kaedama: (v) => (v.kaedama === true ? '替え玉あり' : v.kaedama === false ? '替え玉なし' : '—'),
   items: (v) => join([v.base_items ? `具材:${String(v.base_items).split(',').join('・')}` : null, v.sides ? `付け合わせ:${String(v.sides).split(',').join('・')}` : null]),
   rec: (v) => join([v.would_return === true ? 'また行く' : v.would_return === false ? '行かない' : null, v.would_recommend ? '人にすすめたい' : null]),
   party: (v) => (nn(v.party_size) ? `${v.party_size}人` : '—'),
@@ -57,7 +58,7 @@ const FORMAT: Record<string, (v: any) => string> = {
 /** 評価の項目（key はサーバの shop_reviews が返すグループ名）。need は見られる階級（0=見習い … 4=主任）。入力できる階級と同じ */
 export const REVIEW_GROUPS: { k: string; l: string; need: number }[] = [
   { k: 'price', l: '価格', need: 0 }, { k: 'volume', l: '量', need: 0 }, { k: 'soup', l: 'スープ', need: 0 },
-  { k: 'toppings', l: 'トッピング', need: 0 }, { k: 'note', l: '感想', need: 0 }, { k: 'rec', l: 'おすすめ', need: 0 },
+  { k: 'toppings', l: 'トッピング', need: 0 }, { k: 'kaedama', l: '替え玉', need: 0 }, { k: 'note', l: '感想', need: 0 }, { k: 'rec', l: 'おすすめ', need: 0 },
   { k: 'party', l: '人数', need: 1 }, { k: 'mood', l: '気分', need: 1 }, { k: 'condition', l: '体調', need: 1 },
   { k: 'quiet', l: '静かさ', need: 1 }, { k: 'wait', l: '待ち時間', need: 1 }, { k: 'clean', l: '清掃', need: 1 },
   { k: 'noodle', l: '濃さ・麺', need: 1 }, { k: 'items', l: '具材', need: 1 }, { k: 'photos', l: '写真', need: 1 },

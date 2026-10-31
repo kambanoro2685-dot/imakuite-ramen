@@ -39,6 +39,7 @@ export const FIELDS: FieldDef[] = [
   { k: 'note', n: '食べた後の感想（5文字以上）', rank: 0, type: 'text', g: 'basic_record' },
   { k: 'soup', n: 'スープの系統', rank: 0, type: 'pick', opts: [...GENRES, 'その他'], g: 'ramen_soup', hint: '好みのマッチングに使われます' },
   { k: 'rec', n: 'おすすめ度', rank: 0, type: 'pick', opts: ['また行く', '気が向いたら', '行かない'] },
+  { k: 'kaedama', n: '替え玉（有無）', rank: 0, type: 'pick', opts: ['替え玉あり', '替え玉なし'], hint: '替え玉をしたかどうか。記録用で、ポイントは付きません' },
   { k: 'toppings', n: 'トッピング（追加したもの）', rank: 0, type: 'multi', opts: TOPPINGS, g: 'ramen_toppings', hint: '追加したトッピングだけ。定食の具材・ご飯・チャーハン・餃子は入力できません' },
   { k: 'tops_other', n: 'トッピング（その他・自由入力）', rank: 0, type: 'item', parent: 'toppings', g: 'ramen_toppings' },
 
@@ -58,7 +59,6 @@ export const FIELDS: FieldDef[] = [
   { k: 'thick', n: '麺の太さ', rank: 1, type: 'pick', opts: THICKNESS, g: 'ramen_noodle' },
   { k: 'firm', n: '麺の硬さ', rank: 1, type: 'pick', opts: FIRMNESS, g: 'ramen_noodle' },
   { k: 'ntype', n: '麺の種類（ちぢれ・ストレート・平打ち）', rank: 1, type: 'pick', opts: NOODLE_TYPES, hint: '好みのマッチングに使われます' },
-  { k: 'kaedama', n: '替え玉', rank: 1, type: 'pick', opts: ['替え玉した', 'しなかった', '替え玉なし（つけ麺など）'] },
   { k: 'base', n: 'デフォルトの具材（最初から乗っているもの）', rank: 1, type: 'multi', opts: INGREDIENTS, g: 'ramen_items', hint: '丼の中身だけ。定食の具材・ご飯・チャーハン・餃子は入力できません' },
   { k: 'base_other', n: 'デフォルトの具材（その他・自由入力）', rank: 1, type: 'item', parent: 'base', g: 'ramen_items' },
   { k: 'sides', n: '付け合わせ（薬味・卓上の味付けなど）', rank: 1, type: 'multi', opts: SIDES, g: 'ramen_extras', hint: '薬味や卓上の味付けなど。ご飯・餃子は入力できません' },
@@ -167,11 +167,11 @@ export const TIER_TITLES = [
   '計測・推し一杯',
 ];
 
-export const DEFAULT_PALETTE: Record<string, boolean> = { photo: true, price: true, amount: true, note: true, soup: true, rec: true, toppings: true };
+export const DEFAULT_PALETTE: Record<string, boolean> = { photo: true, price: true, amount: true, note: true, soup: true, rec: true, toppings: true, kaedama: true };
 
 export const RANKS = [
   { n: '見習い', at: 0, unlock: '基本の7項目（写真・価格・量・感想・スープの系統・おすすめ度・トッピング）。ルーレットは1日3回。評価を読めるのは、自分が投稿した店だけです。' },
-  { n: '三級インスペクター', at: 300, unlock: '体調・人数と気分・静かさと待ち時間・清掃5項目・濃さと麺（太さ・硬さ・種類・替え玉）・デフォルトの具材・付け合わせ・抜いた具材・嫌いな具材が入力できます。ルーレット無制限。どの店でも、直近30日の他の調査官の評価が読めます。' },
+  { n: '三級インスペクター', at: 300, unlock: '体調・人数と気分・静かさと待ち時間・清掃5項目・濃さと麺（太さ・硬さ・種類）・デフォルトの具材・付け合わせ・抜いた具材・嫌いな具材が入力できます。ルーレット無制限。どの店でも、直近30日の他の調査官の評価が読めます。' },
   { n: '二級インスペクター', at: 1200, unlock: 'スープの味5評価・接客・提供時間が入力できます。全期間の平均値（満足度・価格・待ち時間・濃さ・味など）が読めます。' },
   { n: '一級インスペクター', at: 3000, unlock: '品質4項目・混み具合・支払い・喫煙・席・設備が入力できます。全期間・全件の評価が読めて、並べ替えもできます。' },
   { n: '主任インスペクター', at: 8000, unlock: '騒音の測定・推し一杯・価格の表記・来店の目的が入力できます。他の調査官の訂正履歴が読めます。' },

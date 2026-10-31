@@ -73,8 +73,8 @@ export async function syncPost(post: Post, save: (s: Sync) => void): Promise<voi
     if (v.thick) row.noodle_thick = v.thick;
     if (v.firm) row.noodle_firm = v.firm;
     if (v.ntype) row.noodle_type = v.ntype;
-    if (v.kaedama === '替え玉した') row.kaedama = true;
-    else if (v.kaedama === 'しなかった') row.kaedama = false;
+    if (v.kaedama === '替え玉あり' || v.kaedama === '替え玉した') row.kaedama = true;
+    else if (v.kaedama === '替え玉なし' || v.kaedama === 'しなかった') row.kaedama = false;
     // 具材・トッピング・付け合わせ: 選んだもの + 自由入力（カンマ区切り）
     const merge = (chips?: string, other?: string) => [...list(chips), ...(other ? other.split(/[,、，\s]+/).filter(Boolean) : [])].join(',');
     const base = merge(v.base, v.base_other);
