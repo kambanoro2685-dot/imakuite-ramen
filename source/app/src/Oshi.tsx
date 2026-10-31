@@ -152,6 +152,7 @@ export default function Oshi({ go }: { go: Go }) {
           <Chip label="ポイント順" on={kind === 'points'} onPress={() => setKind('points')} />
           <Chip label="推されている数" on={kind === 'fans'} onPress={() => setKind('fans')} />
         </Chips>
+        {rank.some((r) => r.codename.startsWith('見本')) ? <Muted>※ 名前が「見本」で始まる調査官は、見本のデータです（試験用。本物の利用者が増えたら消します）。</Muted> : null}
         {rank.length === 0 ? <Muted>まだ公開している調査官がいません。公開すると、あなたが最初の1人になります。</Muted> : rank.map((r) => <Row key={r.public_id} r={r} onToggle={toggle} busy={busy} />)}
       </View>
     </ScrollView>
