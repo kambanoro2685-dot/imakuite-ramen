@@ -8,7 +8,7 @@ import { visitedPins, pinLabel } from './pins';
 import { Credit, RankMix } from './Search';
 import { today, useStore } from './store';
 import { C, mono } from './theme';
-import { Venue, useVenues, walkMin, walkText } from './venues';
+import { Venue, isRamenShop, useVenues, walkMin, walkText } from './venues';
 import ShopReviews from './Reviews';
 import { matchOf } from './match';
 import { Btn, Chip, Chips, Head, Lbl, Muted } from './ui';
@@ -47,7 +47,7 @@ export default function Roulette({ go }: { go: Go }) {
   };
 
   const pool = useMemo(
-    () => venues.filter((v) => v.dist <= radius && (g === 'すべて' || v.g === g)),
+    () => venues.filter((v) => isRamenShop(v) && v.dist <= radius && (g === 'すべて' || v.g === g)),
     [venues, radius, g],
   );
 
@@ -124,6 +124,7 @@ export default function Roulette({ go }: { go: Go }) {
       ) : (
         <Muted>条件に合う {pool.length} 件から、{cells.length} 件をルーレットに載せました。</Muted>
       )}
+      <Muted>ルーレットには、ラーメンの店だけが載ります（自分で追加した店は、店名や口コミでラーメンと分かるものだけ）。</Muted>
 
       <View style={{ gap: 6 }}>
         {cells.map((v, i) => {

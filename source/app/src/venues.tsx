@@ -23,6 +23,8 @@ export type Venue = {
   ntype: string | null;
   /** 口コミで多いトッピング（上位3つ） */
   toppings: string[] | null;
+  /** 店の出どころ: osm=取り込んだラーメン店 / inspector=調査官が追加した店 / local=この端末だけの店 */
+  source: string | null;
   /** 基準点（現在地 or 岡山駅）からの距離[m] */
   dist: number;
 };
@@ -31,6 +33,10 @@ export type Center = { lat: number; lng: number; source: 'gps' | 'default' };
 
 // 岡山駅（第1期の対象エリア: 岡山市北区・中心部）
 export const DEFAULT_CENTER: Center = { lat: 34.6666, lng: 133.9183, source: 'default' };
+
+/** ラーメンの店か。取り込んだ店(osm)は全部ラーメン。調査官が追加した店は、系統・口コミのスープ・店名でラーメンと分かるものだけ */
+const RAMEN_WORD = /ラーメン|らーめん|らぁめん|拉麺|ラァメン|中華そば|中華蕎麦|支那そば|つけ麺|つけめん|担々麺|担担麺|まぜそば|油そば|家系|二郎|麺屋|麺処|麺家|ramen/i;
+export const isRamenShop = (v: Venue) => v.source === 'osm' || !!v.soup || (v.g !== 'その他' && v.source !== 'local') || RAMEN_WORD.test(v.n);
 
 export const walkMin = (m: number) => Math.max(1, Math.round(m / 80));
 /** 近い店は「徒歩N分」、遠い店は「約N.Nkm」 */
@@ -106,7 +112,7 @@ export function VenueProvider({ children }: { children: React.ReactNode }) {
     const list: Venue[] = rows.map((r) => ({
       id: r.id, n: r.name, g: r.genre ?? 'その他', lat: r.lat, lng: r.lng, url: r.url ?? null,
       reviews: r.review_count ?? null, ranks: r.rank_counts ?? null,
-      soup: r.soup_top ?? null, rich: r.richness_avg == null ? null : Number(r.richness_avg), thick: r.thick_top ?? null, ntype: r.type_top ?? null, toppings: r.toppings_top ?? null, dist: r.distance_m ?? 0,
+      soup: r.soup_top ?? null, rich: r.richness_avg == null ? null : Number(r.richness_avg), thick: r.thick_top ?? null, ntype: r.type_top ?? null, toppings: r.toppings_top ?? null, source: r.source ?? null, dist: r.distance_m ?? 0,
     }));
     list.forEach((v) => seen.current.set(v.id, v));
     setVenues(list);
@@ -155,14 +161,14 @@ export function VenueProvider({ children }: { children: React.ReactNode }) {
     const rad = Math.PI / 180;
     return (S.localVenues ?? []).map((lv) => {
       const m = 6371000 * Math.acos(Math.min(1, Math.cos(center.lat * rad) * Math.cos(lv.lat * rad) * Math.cos((lv.lng - center.lng) * rad) + Math.sin(center.lat * rad) * Math.sin(lv.lat * rad)));
-      return { id: lv.id, n: lv.n, g: lv.g, lat: lv.lat, lng: lv.lng, url: null, reviews: null, ranks: null, soup: null, rich: null, thick: null, ntype: null, toppings: null, dist: Math.round(m) } as Venue;
+      return { id: lv.id, n: lv.n, g: lv.g, lat: lv.lat, lng: lv.lng, url: null, reviews: null, ranks: null, soup: null, rich: null, thick: null, ntype: null, toppings: null, source: 'local', dist: Math.round(m) } as Venue;
     });
   }, [S.account, S.localVenues, center]);
 
   const addLocalVenue = useCallback((name: string, lat: number, lng: number): Venue => {
     const id = uuid4();
     update((s) => ({ ...s, localVenues: [{ id, n: name, g: 'その他', lat, lng }, ...(s.localVenues ?? [])] }));
-    return { id, n: name, g: 'その他', lat, lng, url: null, reviews: null, ranks: null, soup: null, rich: null, thick: null, ntype: null, toppings: null, dist: 0 };
+    return { id, n: name, g: 'その他', lat, lng, url: null, reviews: null, ranks: null, soup: null, rich: null, thick: null, ntype: null, toppings: null, source: 'local', dist: 0 };
   }, [update]);
 
   const all = useMemo(() => [...localAll, ...venues.filter((v) => !localAll.some((l) => l.id === v.id))], [localAll, venues]);

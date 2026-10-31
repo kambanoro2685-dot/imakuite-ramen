@@ -141,7 +141,7 @@ export function VenueDetail({ id, go }: { id: string; go: Go }) {
   const { setD } = useDraft();
   const { byId, center, oshiOf } = useVenues();
   const post0 = S.posts.find((p) => p.venue === id && p.lat != null);
-  const v: Venue | undefined = byId(id) ?? (post0 ? { id, n: post0.venueName, g: post0.genre ?? 'その他', lat: post0.lat!, lng: post0.lng!, url: null, reviews: null, ranks: null, soup: null, rich: null, thick: null, ntype: null, toppings: null, dist: 0 } : undefined);
+  const v: Venue | undefined = byId(id) ?? (post0 ? { id, n: post0.venueName, g: post0.genre ?? 'その他', lat: post0.lat!, lng: post0.lng!, url: null, reviews: null, ranks: null, soup: null, rich: null, thick: null, ntype: null, toppings: null, source: null, dist: 0 } : undefined);
   if (!v) {
     return (
       <ScrollView contentContainerStyle={{ padding: 16, gap: 12 }}>

@@ -41,6 +41,7 @@ await db.exec(read('0012_oshi_ranking.sql'));
 await db.exec(read('0013_ramen.sql'));
 await db.exec(read('0014_noodle_type.sql'));
 await db.exec(read('0015_toppings_top.sql'));
+await db.exec(read('0016_shop_source.sql'));
 
 let failed = 0, passed = 0;
 const ok = (c, name, extra = '') => { c ? passed++ : failed++; console.log(`${c ? 'PASS' : 'FAIL'}  ${name}${c ? '' : '  ' + extra}`); };
@@ -420,6 +421,14 @@ ok(rr2.summary?.richness && rr2.summary.richness.masked === undefined, 'ラー�
   ok(Array.isArray(row.toppings_top) && row.toppings_top[0] === '味玉' && row.toppings_top[1] === 'チャーシュー' && row.toppings_top.length <= 3, 'トッピング: 3件以上で、多い順に上位3つが出る', JSON.stringify(row.toppings_top));
   const sNone = (await as(A.id, () => q('select * from public.search_shops(34.6667, 133.9188, 1500)'))).rows.find((r) => r.review_count === null);
   ok(sNone.toppings_top === null, 'トッピング: 3件未満は出さない');
+}
+
+// ===== 店の出どころ =====
+{
+  const s = await as(A.id, () => q('select id, source from public.search_shops(34.671, 133.921, 300)'));
+  ok(s.rows.find((r) => r.id === RS)?.source === 'inspector', '店の出どころ: 調査官が追加した店は inspector');
+  const all = await as(A.id, () => q('select id, source from public.search_shops(34.6667, 133.9188, 1500)'));
+  ok(all.rows.some((r) => r.source === 'osm'), '店の出どころ: 取り込んだ店は osm');
 }
 
 // ===== 推し・公開ランキング =====

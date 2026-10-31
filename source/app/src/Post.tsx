@@ -76,7 +76,7 @@ export default function PostScreen({ go }: { go: Go }) {
         return;
       }
       const id = await createShop(name, here.lat, here.lng);
-      addVenue({ id, n: name, g: 'その他', lat: here.lat, lng: here.lng, url: null, reviews: null, ranks: null, soup: null, rich: null, thick: null, ntype: null, toppings: null, dist: 0 });
+      addVenue({ id, n: name, g: 'その他', lat: here.lat, lng: here.lng, url: null, reviews: null, ranks: null, soup: null, rich: null, thick: null, ntype: null, toppings: null, source: 'inspector', dist: 0 });
       setD((x) => ({ ...x, venue: id }));
       setVq('');
       setAddAsk(false);

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { matchOf } from './match';
 import { ScrollView, Text, View } from 'react-native';
 import { useDraft } from './draft';
-import { useVenues, walkMin, walkText } from './venues';
+import { isRamenShop, useVenues, walkMin, walkText } from './venues';
 import { Go } from './nav';
 import { useStore } from './store';
 import { C, mono } from './theme';
@@ -30,8 +30,8 @@ export default function Home({ go }: { go: Go }) {
   const last = S.posts[0];
   const { venues, center, oshiOf } = useVenues();
   const pick =
-    venues.find((v) => oshiOf[v.id] && !S.visited.includes(v.id)) ??
-    [...venues].filter((v) => !S.visited.includes(v.id) && (matchOf(v, S.profile).pct ?? 0) > 0).sort((a, b) => (matchOf(b, S.profile).pct ?? 0) - (matchOf(a, S.profile).pct ?? 0) || a.dist - b.dist)[0];
+    venues.find((v) => isRamenShop(v) && oshiOf[v.id] && !S.visited.includes(v.id)) ??
+    [...venues].filter((v) => isRamenShop(v) && !S.visited.includes(v.id) && (matchOf(v, S.profile).pct ?? 0) > 0).sort((a, b) => (matchOf(b, S.profile).pct ?? 0) - (matchOf(a, S.profile).pct ?? 0) || a.dist - b.dist)[0];
 
   const enter = async () => {
     if (busy) return;
