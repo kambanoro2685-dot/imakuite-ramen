@@ -83,6 +83,10 @@ export async function syncPost(post: Post, save: (s: Sync) => void): Promise<voi
     if (tops) row.toppings = tops.slice(0, 120);
     const sides = merge(v.sides, v.sides_other);
     if (sides) row.sides = sides.slice(0, 200);
+    const removed = merge(v.removed, v.removed_other);
+    if (removed) row.removed_items = removed.slice(0, 200);
+    const disliked = merge(v.disliked, v.disliked_other);
+    if (disliked) row.disliked_items = disliked.slice(0, 200);
     const taste: Record<string, string> = { ts_sweet: 'taste_sweet', ts_salty: 'taste_salty', ts_sour: 'taste_sour', ts_bitter: 'taste_bitter', ts_umami: 'taste_umami', ts_hot: 'taste_hot' };
     for (const [k, col] of Object.entries(taste)) if (v[k] !== undefined && v[k] !== '') row[col] = Number(v[k]);
     if (v.tax) row.tax_included = v.tax === '税込';

@@ -11,6 +11,8 @@ export const FIRMNESS = ['固め', '普通', '柔らかめ'];
 export const INGREDIENTS = ['チャーシュー', 'メンマ', 'ネギ', '海苔', 'なると', 'もやし', 'ほうれん草', '青菜', 'きくらげ', 'キャベツ', '玉ねぎ', 'ニラ', 'コーン', 'わかめ'];
 /** 付け合わせ（薬味・卓上の味付けなど。ご飯・餃子などは含めない） */
 export const SIDES = ['高菜', '紅しょうが', '白ごま', 'おろしにんにく', '漬物', 'ゆず胡椒', 'ラー油', '酢', 'コショウ'];
+/** 抜いてもらった具材・嫌いな具材の選択肢（丼の具材・トッピング・付け合わせをまとめたもの） */
+export const ALL_ITEMS = Array.from(new Set([...INGREDIENTS, ...TOPPINGS, ...SIDES]));
 
 export type FieldDef = { k: string; n: string; pt: number; rank: number; hint?: string } & (
   | { type: 'photo' | 'price' | 'text' }
@@ -36,6 +38,10 @@ export const FIELDS: FieldDef[] = [
   { k: 'tops_other', n: 'トッピング（その他・自由入力）', pt: 0, rank: 0, type: 'item' },
   { k: 'sides', n: '付け合わせ（薬味・卓上の味付けなど）', pt: 0, rank: 0, type: 'multi', opts: SIDES, hint: '薬味や卓上の味付けなど。ご飯・餃子は入力できません' },
   { k: 'sides_other', n: '付け合わせ（その他・自由入力）', pt: 0, rank: 0, type: 'item' },
+  { k: 'removed', n: '抜いてもらった具材（この一杯で抜いたもの）', pt: 0, rank: 0, type: 'multi', opts: ALL_ITEMS, hint: '「ネギ抜き」「にんにく抜き」など。定食の具材・ご飯・チャーハン・餃子は入力できません' },
+  { k: 'removed_other', n: '抜いてもらった具材（その他・自由入力）', pt: 0, rank: 0, type: 'item' },
+  { k: 'disliked', n: '嫌いな具材（苦手なもの）', pt: 0, rank: 0, type: 'multi', opts: ALL_ITEMS, hint: '苦手な具材。ご飯・餃子などは入力できません' },
+  { k: 'disliked_other', n: '嫌いな具材（その他・自由入力）', pt: 0, rank: 0, type: 'item' },
   { k: 'amount', n: '量（麺・全体）', pt: 5, rank: 0, type: 'pick', opts: ['少なめ', 'ちょうど', '多め', '驚愕'] },
   { k: 'soup', n: 'スープの系統', pt: 5, rank: 0, type: 'pick', opts: [...GENRES, 'その他'], hint: '好みのマッチングに使われます' },
   { k: 'rec', n: 'おすすめ度', pt: 5, rank: 0, type: 'pick', opts: ['また行く', '気が向いたら', '行かない'] },
@@ -96,7 +102,7 @@ export const TIER_TITLES = [
   '計測・推し一杯',
 ];
 
-export const DEFAULT_PALETTE: Record<string, boolean> = { soup: true, base: true, base_other: true, toppings: true, tops_other: true, sides: true, sides_other: true, price: true, note: true, amount: true };
+export const DEFAULT_PALETTE: Record<string, boolean> = { soup: true, base: true, base_other: true, toppings: true, tops_other: true, sides: true, sides_other: true, removed: true, removed_other: true, disliked: true, disliked_other: true, price: true, note: true, amount: true };
 
 export const RANKS = [
   { n: '見習い', at: 0, unlock: '基本の入力項目（写真・価格・感想・スープの系統・具材・トッピング・付け合わせなど）。ルーレットは1日3回。評価できる範囲は自分が投稿した店だけです。' },

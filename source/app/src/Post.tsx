@@ -135,7 +135,7 @@ export default function PostScreen({ go }: { go: Go }) {
     if (!D.venue) return showToast('店を選んでください。「① 調査対象」の候補を1件タップします（選ぶと赤くなります）。');
     if (!D.dish.trim()) return showToast('「食べた一杯の品名」だけは必要です。記録の芯になります。');
     if (!D.sat) return showToast('満足度をひとつ選んでください。');
-    for (const t of [D.dish, D.vals.base_other, D.vals.tops_other, D.vals.sides_other]) {
+    for (const t of [D.dish, D.vals.base_other, D.vals.tops_other, D.vals.sides_other, D.vals.removed_other, D.vals.disliked_other]) {
       const w = t ? findBanned(t) : null;
       if (w) return showToast(`「${w}」は入力できません。ラーメンの丼の中身・トッピング・付け合わせだけを入力してください。`);
     }

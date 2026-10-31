@@ -44,6 +44,7 @@ await db.exec(read('0015_toppings_top.sql'));
 await db.exec(read('0016_shop_source.sql'));
 await db.exec(read('0017_ramen_only_items.sql'));
 await db.exec(read('0018_review_items.sql'));
+await db.exec(read('0019_removed_disliked_items.sql'));
 
 
 let failed = 0, passed = 0;

@@ -44,6 +44,7 @@ await db.exec(read('0015_toppings_top.sql'));
 await db.exec(read('0016_shop_source.sql'));
 await db.exec(read('0017_ramen_only_items.sql'));
 await db.exec(read('0018_review_items.sql'));
+await db.exec(read('0019_removed_disliked_items.sql'));
 
 let failed = 0, passed = 0;
 const ok = (c, name, extra = '') => { c ? passed++ : failed++; console.log(`${c ? 'PASS' : 'FAIL'}  ${name}${c ? '' : '  ' + extra}`); };
@@ -461,6 +462,21 @@ ok(rr2.summary?.richness && rr2.summary.richness.masked === undefined, 'ラー�
   ok(!!withTops && /味玉/.test(withTops.items.toppings), '評価一覧: 自分も入力していれば、他の人の具材・トッピングが見える', JSON.stringify(rv.items.map((x) => x.items)));
   ok(rv.items.every((x) => 'items' in x && 'noodle' in x && !('toppings' in x)), '評価一覧: items グループになった（旧 toppings は無い）');
   ok(rv.items.some((x) => x.noodle && !x.noodle.masked ? 'noodle_type' in x.noodle : true), '評価一覧: 麺の種類も返す');
+}
+
+// ===== 抜いてもらった具材・嫌いな具材 =====
+{
+  const u = await newUser('抜き試験');
+  const mk = async (cols) => {
+    const v = randomUUID();
+    await as(u.id, () => q('insert into public.visit (id, shop_id, entered_at) values ($1, $2, now())', [v, RS]));
+    const keys = Object.keys(cols);
+    const sql = 'insert into public.dish (id, visit_id, name' + keys.map((k) => ', ' + k).join('') + ') values ($1, $2, $3' + keys.map((_, i) => ', $' + (i + 4)).join('') + ')';
+    return as(u.id, () => err(q(sql, [randomUUID(), v, '醤油ラーメン', ...keys.map((k) => cols[k])])));
+  };
+  ok((await mk({ removed_items: 'ネギ,海苔', disliked_items: 'きくらげ,にんにく' })) === null, '抜いてもらった具材・嫌いな具材を保存できる');
+  ok((await mk({ removed_items: 'ライス' })) !== null, '抜いた具材にも、ご飯などは入れられない');
+  ok((await mk({ disliked_items: '餃子' })) !== null, '嫌いな具材にも、餃子などは入れられない');
 }
 
 // ===== 推し・公開ランキング =====
