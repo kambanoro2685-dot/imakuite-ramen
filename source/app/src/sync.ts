@@ -75,8 +75,14 @@ export async function syncPost(post: Post, save: (s: Sync) => void): Promise<voi
     if (v.ntype) row.noodle_type = v.ntype;
     if (v.kaedama === '替え玉した') row.kaedama = true;
     else if (v.kaedama === 'しなかった') row.kaedama = false;
-    const tops = list(v.toppings).join(',');
+    // 具材・トッピング・付け合わせ: 選んだもの + 自由入力（カンマ区切り）
+    const merge = (chips?: string, other?: string) => [...list(chips), ...(other ? other.split(/[,、，\s]+/).filter(Boolean) : [])].join(',');
+    const base = merge(v.base, v.base_other);
+    if (base) row.base_items = base.slice(0, 200);
+    const tops = merge(v.toppings, v.tops_other);
     if (tops) row.toppings = tops.slice(0, 120);
+    const sides = merge(v.sides, v.sides_other);
+    if (sides) row.sides = sides.slice(0, 200);
     const taste: Record<string, string> = { ts_sweet: 'taste_sweet', ts_salty: 'taste_salty', ts_sour: 'taste_sour', ts_bitter: 'taste_bitter', ts_umami: 'taste_umami', ts_hot: 'taste_hot' };
     for (const [k, col] of Object.entries(taste)) if (v[k] !== undefined && v[k] !== '') row[col] = Number(v[k]);
     if (v.tax) row.tax_included = v.tax === '税込';

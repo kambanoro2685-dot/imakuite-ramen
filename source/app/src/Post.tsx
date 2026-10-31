@@ -8,6 +8,7 @@ import { FIELDS, RANKS, TIER_TITLES } from './data';
 import { createShop, friendly } from './account';
 import { useVenues, walkMin, walkText } from './venues';
 import { Go } from './nav';
+import { BANNED_NOTICE, findBanned } from './rules';
 import { uuid4 } from './supabase';
 import { Post, rankIndexOf, useStore } from './store';
 import { useSyncer } from './useSyncer';
@@ -90,6 +91,15 @@ export default function PostScreen({ go }: { go: Go }) {
     }
   };
 
+  // ラーメン以外の品目（定食・ご飯・チャーハン・餃子）は入力できない
+  const [banMsg, setBanMsg] = React.useState('');
+  const guard = (t: string): boolean => {
+    const w = findBanned(t);
+    if (w) { setBanMsg(`「${w}」は入力できません。${BANNED_NOTICE.replace('⚠ ', '')}`); return false; }
+    setBanMsg('');
+    return true;
+  };
+
   const setVal = (k: string, v: string) => setD((x) => ({ ...x, vals: { ...x.vals, [k]: v } }));
 
   const upd = (id: string, patch: Partial<DraftPhoto>) =>
@@ -125,6 +135,10 @@ export default function PostScreen({ go }: { go: Go }) {
     if (!D.venue) return showToast('店を選んでください。「① 調査対象」の候補を1件タップします（選ぶと赤くなります）。');
     if (!D.dish.trim()) return showToast('「食べた一杯の品名」だけは必要です。記録の芯になります。');
     if (!D.sat) return showToast('満足度をひとつ選んでください。');
+    for (const t of [D.dish, D.vals.base_other, D.vals.tops_other, D.vals.sides_other]) {
+      const w = t ? findBanned(t) : null;
+      if (w) return showToast(`「${w}」は入力できません。ラーメンの丼の中身・トッピング・付け合わせだけを入力してください。`);
+    }
     const v = byId(D.venue);
     if (!v) return showToast('店の情報を読み込めませんでした。もう一度選んでください。');
     const first = !S.visited.includes(v.id);
@@ -231,7 +245,9 @@ export default function PostScreen({ go }: { go: Go }) {
 
         <View style={{ gap: 7 }}>
           <Lbl>② 食べた一杯（品名）</Lbl>
-          <Input value={D.dish} onChangeText={(t) => setD((x) => ({ ...x, dish: t }))} placeholder="例：特製味噌ラーメン" />
+          <Input value={D.dish} onChangeText={(t) => { if (guard(t)) setD((x) => ({ ...x, dish: t })); }} placeholder="例：特製味噌ラーメン" />
+          <Muted>{BANNED_NOTICE}</Muted>
+          {banMsg ? <Text selectable style={{ color: C.crit, fontWeight: '700' }}>{banMsg}</Text> : null}
         </View>
 
         <View style={{ gap: 7 }}>
@@ -331,6 +347,8 @@ export default function PostScreen({ go }: { go: Go }) {
                   人の顔が写らないようにしてください（顔のぼかしは未対応です）。
                 </Muted>
               </View>
+            ) : f.type === 'item' ? (
+              <Input value={D.vals[f.k] ?? ''} onChangeText={(t) => { if (guard(t)) setVal(f.k, t.slice(0, 60)); }} placeholder="例：背脂、白髪ねぎ（ラーメンの具材だけ）" maxLength={60} />
             ) : (
               <Input value={D.vals[f.k] ?? ''} onChangeText={(t) => setVal(f.k, t)} placeholder="話しかけるように書いてください" multiline />
             )}

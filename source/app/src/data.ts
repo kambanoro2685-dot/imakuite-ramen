@@ -7,9 +7,14 @@ export const THICKNESS = ['細', '中', '太', '極太'];
 export const NOODLE_TYPES = ['ちぢれ', 'ストレート', '平打ち'];
 export const TOPPINGS = ['チャーシュー', '味玉', 'メンマ', 'ネギ', '海苔', 'もやし', 'ほうれん草', '背脂', 'にんにく', '辛味噌'];
 export const FIRMNESS = ['固め', '普通', '柔らかめ'];
+/** デフォルトの具材（最初から丼に乗っているもの） */
+export const INGREDIENTS = ['チャーシュー', 'メンマ', 'ネギ', '海苔', 'なると', 'もやし', 'ほうれん草', '青菜', 'きくらげ', 'キャベツ', '玉ねぎ', 'ニラ', 'コーン', 'わかめ'];
+/** 付け合わせ（薬味・卓上の味付けなど。ご飯・餃子などは含めない） */
+export const SIDES = ['高菜', '紅しょうが', '白ごま', 'おろしにんにく', '漬物', 'ゆず胡椒', 'ラー油', '酢', 'コショウ'];
 
 export type FieldDef = { k: string; n: string; pt: number; rank: number; hint?: string } & (
   | { type: 'photo' | 'price' | 'text' }
+  | { type: 'item' } // 短い自由入力（ラーメン以外の品目は入力できない）
   | { type: 'range'; labels: string[] } // labels[1..5]
   | { type: 'pick'; opts: string[] }
   | { type: 'faces'; opts: [string, string][] }
@@ -25,6 +30,12 @@ export const FIELDS: FieldDef[] = [
   { k: 'photo', n: '写真（最大3枚）', pt: 5, rank: 0, type: 'photo', hint: '1枚ごとに +5pt（最大 +15pt）' },
   { k: 'price', n: '価格', pt: 10, rank: 0, type: 'price' },
   { k: 'note', n: '食べた後の感想', pt: 10, rank: 0, type: 'text' },
+  { k: 'base', n: 'デフォルトの具材（最初から乗っているもの）', pt: 0, rank: 0, type: 'multi', opts: INGREDIENTS, hint: '丼の中身だけ。定食の具材・ご飯・チャーハン・餃子は入力できません' },
+  { k: 'base_other', n: 'デフォルトの具材（その他・自由入力）', pt: 0, rank: 0, type: 'item' },
+  { k: 'toppings', n: 'トッピング（追加したもの）', pt: 0, rank: 0, type: 'multi', opts: TOPPINGS, hint: '追加したトッピングだけ。一等以上は、1つ以上選ぶと +3pt' },
+  { k: 'tops_other', n: 'トッピング（その他・自由入力）', pt: 0, rank: 0, type: 'item' },
+  { k: 'sides', n: '付け合わせ（薬味・卓上の味付けなど）', pt: 0, rank: 0, type: 'multi', opts: SIDES, hint: '薬味や卓上の味付けなど。ご飯・餃子は入力できません' },
+  { k: 'sides_other', n: '付け合わせ（その他・自由入力）', pt: 0, rank: 0, type: 'item' },
   { k: 'amount', n: '量（麺・全体）', pt: 5, rank: 0, type: 'pick', opts: ['少なめ', 'ちょうど', '多め', '驚愕'] },
   { k: 'soup', n: 'スープの系統', pt: 5, rank: 0, type: 'pick', opts: [...GENRES, 'その他'], hint: '好みのマッチングに使われます' },
   { k: 'rec', n: 'おすすめ度', pt: 5, rank: 0, type: 'pick', opts: ['また行く', '気が向いたら', '行かない'] },
@@ -63,7 +74,6 @@ export const FIELDS: FieldDef[] = [
   { k: 'texture', n: '品質｜麺の食感', pt: 3, rank: 3, type: 'pick', opts: GOOD3 },
   { k: 'temperature', n: '品質｜スープの温度', pt: 3, rank: 3, type: 'pick', opts: GOOD3 },
   { k: 'presentation', n: '品質｜見た目', pt: 3, rank: 3, type: 'pick', opts: GOOD3, hint: '4項目そろえると +10pt' },
-  { k: 'toppings', n: 'トッピング', pt: 3, rank: 3, type: 'multi', opts: TOPPINGS, hint: '1つ以上選ぶと +3pt' },
   { k: 'crowd', n: '混み具合', pt: 2, rank: 3, type: 'pick', opts: ['空いている', 'ふつう', 'やや混み', '満席', '行列'] },
   { k: 'pay', n: '支払い方法', pt: 2, rank: 3, type: 'multi', opts: ['現金', '交通系IC', 'クレジット', 'QR'] },
   { k: 'smoke', n: '喫煙', pt: 2, rank: 3, type: 'pick', opts: ['禁煙', '喫煙可', '分煙'], hint: '混み具合・支払い・喫煙で +6pt' },
@@ -86,13 +96,13 @@ export const TIER_TITLES = [
   '計測・推し一杯',
 ];
 
-export const DEFAULT_PALETTE: Record<string, boolean> = { soup: true, price: true, note: true, amount: true };
+export const DEFAULT_PALETTE: Record<string, boolean> = { soup: true, base: true, base_other: true, toppings: true, tops_other: true, sides: true, sides_other: true, price: true, note: true, amount: true };
 
 export const RANKS = [
-  { n: '見習い', at: 0, unlock: '基本の入力項目（写真・価格・感想・スープの系統など8項目）。ルーレットは1日3回。評価できる範囲は自分が投稿した店だけです。' },
+  { n: '見習い', at: 0, unlock: '基本の入力項目（写真・価格・感想・スープの系統・具材・トッピング・付け合わせなど）。ルーレットは1日3回。評価できる範囲は自分が投稿した店だけです。' },
   { n: '三等インスペクター', at: 300, unlock: '入力項目「濃さ・麺の太さと硬さ・替え玉」「清掃5項目・静かさ・待ち時間・満腹度」など14項目が増えます。ルーレット無制限。どの店でも、直近30日の他の調査官の評価が読めます。' },
   { n: '二等インスペクター', at: 1200, unlock: '入力項目「スープの味5評価・接客・提供時間」の8項目が増えます。全期間の平均値（満足度・価格・待ち時間・濃さ・味など）が読めます。' },
-  { n: '一等インスペクター', at: 3000, unlock: '入力項目「品質4項目・トッピング・混み具合・支払い・設備」の10項目が増えます。全期間・全件の評価が読めて、並べ替えもできます。' },
+  { n: '一等インスペクター', at: 3000, unlock: '入力項目「品質4項目・混み具合・支払い・設備」の9項目が増えます。全期間・全件の評価が読めて、並べ替えもできます。' },
   { n: '主任インスペクター', at: 8000, unlock: '入力項目「騒音の測定・推し一杯・来店の目的」が増えます。他の調査官の訂正履歴が読めます。' },
   { n: '特別監察官', at: 20000, unlock: '指摘の検証キューに参加できます（信頼度800以上）。' },
 ];
