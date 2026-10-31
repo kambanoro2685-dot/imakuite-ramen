@@ -41,7 +41,7 @@ export default function PostScreen({ go }: { go: Go }) {
   const rankIdx = rankIndexOf(S.pt);
   const active = FIELDS.filter((f) => f.rank <= rankIdx && S.palette[f.k]);
   const pts = draftPoints(D, S.palette, S.visited, rankIdx);
-  const { venues, byId, center, loading, error, locating, useMyLocation, locateHere, addVenue, resetCenter, radius, reload } = useVenues();
+  const { venues, byId, center, loading, error, locating, useMyLocation, locateHere, addVenue, addLocalVenue, resetCenter, radius, reload } = useVenues();
   const [adding, setAdding] = React.useState(false);
   const [addAsk, setAddAsk] = React.useState(false);
   const [addErr, setAddErr] = React.useState('');
@@ -52,9 +52,7 @@ export default function PostScreen({ go }: { go: Go }) {
   const venueShown = picked && !near.some((v) => v.id === picked.id) ? [picked, ...near] : near;
 
   // ログインの状態: 端末だけで使っている（アカウントなし）／アカウントはあるがログインが切れている
-  const needLogin = !S.account
-    ? '店を追加するには、アカウントが必要です。いまは「この端末だけ」で使っています。'
-    : 'ログインの有効期限が切れています。ログインし直してください。';
+  const needLogin = 'ログインの有効期限が切れています。ログインし直してください。';
   // 最初の画面（新規登録／ログイン）にもどる。この端末の記録（投稿・好み）は残る
   const toLogin = () => update((st) => ({ ...st, onboarded: false }));
 
@@ -62,12 +60,21 @@ export default function PostScreen({ go }: { go: Go }) {
   const addShop = async () => {
     const name = vq.trim();
     if (!name || adding) return;
-    if (!S.account || !signedIn) return setAddErr(needLogin);
+    const localOnly = !S.account;
+    if (S.account && !signedIn) return setAddErr(needLogin);
     if (!addAsk) return setAddErr(''), setAddAsk(true);
     setAdding(true);
     setAddErr('');
     try {
       const here = await locateHere();
+      if (localOnly) {
+        const lv = addLocalVenue(name, here.lat, here.lng);
+        setD((x) => ({ ...x, venue: lv.id }));
+        setVq('');
+        setAddAsk(false);
+        showToast(`「${name}」を、この端末の店として追加しました。（アカウントがないため、他の人には見えず、追加のポイントも付きません）`);
+        return;
+      }
       const id = await createShop(name, here.lat, here.lng);
       addVenue({ id, n: name, g: 'その他', lat: here.lat, lng: here.lng, url: null, reviews: null, ranks: null, soup: null, rich: null, thick: null, ntype: null, toppings: null, dist: 0 });
       setD((x) => ({ ...x, venue: id }));
@@ -168,25 +175,24 @@ export default function PostScreen({ go }: { go: Go }) {
             <View style={{ gap: 6 }}>
               {addAsk ? (
                 <Text style={{ color: C.crit, fontWeight: '700', lineHeight: 20 }}>
-                  「{vq.trim()}」を、いまいる場所（現在地）の店として追加します。他の人の店リストにも載ります。よろしければ、もう一度押してください。
+                  「{vq.trim()}」を、いまいる場所（現在地）の店として追加します。{S.account ? '他の人の店リストにも載ります。' : 'この端末だけの店になります。'}よろしければ、もう一度押してください。
                 </Text>
               ) : null}
               <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
                 <Btn small label={adding ? '追加中…' : addAsk ? '追加する（現在地を使います）' : `＋ 「${vq.trim()}」を現在地の店として追加`} onPress={addShop} />
                 {addAsk && !adding ? <Btn small kind="ghost" label="やめる" onPress={() => setAddAsk(false)} /> : null}
               </View>
-              {!S.account || !signedIn ? (
+              {S.account && !signedIn ? (
                 <View style={{ gap: 6, backgroundColor: C.amberSoft, padding: 10, borderRadius: 3 }}>
                   <Text style={{ color: C.ink, fontWeight: '800' }}>{needLogin}</Text>
                   <Muted>
-                    {!S.account
-                      ? '「アカウントを登録する」を押すと、最初の画面にもどります（新しく登録）。この端末の投稿の記録は残りますが、ポイントは登録後から数え直しになります。'
-                      : '「ログインし直す」を押すと、最初の画面にもどります。パスキーか復旧コードでログインしてください。この端末の記録は残ります。'}
+                    「ログインし直す」を押すと、最初の画面にもどります。パスキーか復旧コードでログインしてください。この端末の記録は残ります。
                   </Muted>
-                  <Btn small label={!S.account ? 'アカウントを登録する' : 'ログインし直す'} onPress={toLogin} style={{ alignSelf: 'flex-start' }} />
+                  <Btn small label="ログインし直す" onPress={toLogin} style={{ alignSelf: 'flex-start' }} />
                 </View>
               ) : null}
-              {addErr && (S.account && signedIn) ? <Text selectable style={{ color: C.crit, fontWeight: '700' }}>{addErr}</Text> : null}
+              {!S.account ? <Muted>アカウントがないときは、この端末だけの店として追加します（他の人には見えず、追加のポイントも付きません）。アカウントを登録すると、全員の店リストに載せて +100pt になります。</Muted> : null}
+              {addErr && !(S.account && !signedIn) ? <Text selectable style={{ color: C.crit, fontWeight: '700' }}>{addErr}</Text> : null}
             </View>
           ) : null}
           <Muted>

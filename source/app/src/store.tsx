@@ -56,6 +56,8 @@ export type State = {
   /** 同意した利用規約の版。synced=false はサーバへ記録できていない（接続できたら送る） */
   terms: { version: string; at: number; synced: boolean } | null;
   /** ルーレットで「ここに行く」を押した店（今日の指令）。24時間、地図に載る */
+  /** アカウントなし（この端末だけ）で追加した店。サーバには送らない */
+  localVenues: { id: string; n: string; g: string; lat: number; lng: number }[];
   mission: { id: string; n: string; g: string; lat: number; lng: number; at: number; sample?: boolean } | null;
   pt: number;
   trust: number;
@@ -87,6 +89,7 @@ export function freshState(): State {
     account: null,
     profile: { nickname: '', nationality: '日本', gender: '', age: '', allergies: '', favorites: [], rich: null, thick: '', ntype: '', toppings: [] },
     terms: null,
+    localVenues: [],
     mission: null,
     pt: 0,
     trust: 50,

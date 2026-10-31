@@ -1,8 +1,8 @@
-import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import * as Location from 'expo-location';
 import { friendly, oshiShops } from './account';
 import { useStore } from './store';
-import { supabase } from './supabase';
+import { supabase, uuid4 } from './supabase';
 
 export type Venue = {
   id: string; // shop.id (uuid)
@@ -46,6 +46,8 @@ type Ctx = {
   radius: number;
   reload: () => Promise<void>;
   useMyLocation: () => Promise<void>;
+  /** アカウントなしで、この端末だけの店を追加する（サーバには送らない） */
+  addLocalVenue: (name: string, lat: number, lng: number) => Venue;
   /** 追加した店を、候補の先頭に足す（サーバから読み直すまでの間も使えるように） */
   addVenue: (v: Venue) => void;
   /** いまの場所を取得して、基準にする（座標を返す） */
@@ -146,10 +148,28 @@ export function VenueProvider({ children }: { children: React.ReactNode }) {
 
   const resetCenter = useCallback(() => setCenter(DEFAULT_CENTER), []);
 
-  const byId = useCallback((id: string) => seen.current.get(id), []);
+  // この端末だけで追加した店（アカウントがあるときは使わない。サーバに無い店は、投稿を送れないため）
+  const { update } = useStore();
+  const localAll: Venue[] = useMemo(() => {
+    if (S.account) return [];
+    const rad = Math.PI / 180;
+    return (S.localVenues ?? []).map((lv) => {
+      const m = 6371000 * Math.acos(Math.min(1, Math.cos(center.lat * rad) * Math.cos(lv.lat * rad) * Math.cos((lv.lng - center.lng) * rad) + Math.sin(center.lat * rad) * Math.sin(lv.lat * rad)));
+      return { id: lv.id, n: lv.n, g: lv.g, lat: lv.lat, lng: lv.lng, url: null, reviews: null, ranks: null, soup: null, rich: null, thick: null, ntype: null, toppings: null, dist: Math.round(m) } as Venue;
+    });
+  }, [S.account, S.localVenues, center]);
+
+  const addLocalVenue = useCallback((name: string, lat: number, lng: number): Venue => {
+    const id = uuid4();
+    update((s) => ({ ...s, localVenues: [{ id, n: name, g: 'その他', lat, lng }, ...(s.localVenues ?? [])] }));
+    return { id, n: name, g: 'その他', lat, lng, url: null, reviews: null, ranks: null, soup: null, rich: null, thick: null, ntype: null, toppings: null, dist: 0 };
+  }, [update]);
+
+  const all = useMemo(() => [...localAll, ...venues.filter((v) => !localAll.some((l) => l.id === v.id))], [localAll, venues]);
+  const byId = useCallback((id: string) => seen.current.get(id) ?? localAll.find((l) => l.id === id), [localAll]);
 
   return (
-    <VenueCtx.Provider value={{ venues, center, loading, error, locating, reload, useMyLocation, locateHere, addVenue, resetCenter, radius, byId, oshiOf, reloadOshi }}>
+    <VenueCtx.Provider value={{ venues: all, center, loading, error, locating, reload, useMyLocation, locateHere, addVenue, addLocalVenue, resetCenter, radius, byId, oshiOf, reloadOshi }}>
       {children}
     </VenueCtx.Provider>
   );
