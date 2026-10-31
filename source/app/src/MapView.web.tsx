@@ -28,7 +28,9 @@ function loadLeaflet(): Promise<any> {
 
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
 
-export default function MapView({ height = 260, center, markers, onSelect }: MapViewProps) {
+export default function MapView({ height = 260, center, markers, path, onSelect }: MapViewProps) {
+  const pathRef = useRef(path);
+  pathRef.current = path;
   const el = useRef<HTMLDivElement | null>(null);
   const map = useRef<any>(null);
   const layer = useRef<any>(null);
@@ -55,7 +57,7 @@ export default function MapView({ height = 260, center, markers, onSelect }: Map
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const key = markers.map((m) => `${m.id}:${m.kind}`).join('|') + `@${center.lat},${center.lng}`;
+  const key = markers.map((m) => `${m.id}:${m.kind}:${m.n ?? ''}`).join('|') + `@${center.lat},${center.lng}` + `#${(path ?? []).map((p) => `${p.lat},${p.lng}`).join(';')}`;
   useEffect(() => {
     const L = (window as any).L;
     if (L && map.current) draw(L);
@@ -66,6 +68,28 @@ export default function MapView({ height = 260, center, markers, onSelect }: Map
     if (!map.current || !layer.current) return;
     layer.current.clearLayers();
     const pts: [number, number][] = [];
+    // 軌跡（行った順に線でつなぐ）。ピンより下に描く
+    const tr = pathRef.current;
+    if (tr && tr.length > 1) {
+      L.polyline(tr.map((p) => [p.lat, p.lng]), { color: C.crit, weight: 3, opacity: 0.85, dashArray: '8 6' }).addTo(layer.current);
+      // 行った順に、各区間の真ん中へ矢印（▶）を置く。向きは、投影した画面上の角度（拡大しても変わらない）
+      for (let i = 1; i < tr.length; i++) {
+        const a = tr[i - 1];
+        const b = tr[i];
+        const pa = map.current.project([a.lat, a.lng], 15);
+        const pb = map.current.project([b.lat, b.lng], 15);
+        const deg = (Math.atan2(pb.y - pa.y, pb.x - pa.x) * 180) / Math.PI;
+        L.marker([(a.lat + b.lat) / 2, (a.lng + b.lng) / 2], {
+          interactive: false,
+          icon: L.divIcon({
+            className: '',
+            iconSize: [22, 22],
+            iconAnchor: [11, 11],
+            html: `<div style="width:22px;height:22px;display:flex;align-items:center;justify-content:center;transform:rotate(${deg}deg);color:${C.crit};font-size:20px;line-height:1;text-shadow:0 0 3px #fff,0 0 3px #fff,0 0 3px #fff">▶</div>`,
+          }),
+        }).addTo(layer.current);
+      }
+    }
     const add = (m: MapMarker) => {
       const ll: [number, number] = [m.lat, m.lng];
       pts.push(ll);
@@ -82,6 +106,15 @@ export default function MapView({ height = 260, center, markers, onSelect }: Map
         });
       } else if (m.kind === 'me') {
         mk = L.circleMarker(ll, { radius: 8, color: '#fff', weight: 3, fillColor: '#1E88E5', fillOpacity: 1 });
+      } else if (m.n != null) {
+        mk = L.marker(ll, {
+          icon: L.divIcon({
+            className: '',
+            iconSize: [26, 26],
+            iconAnchor: [13, 13],
+            html: `<div style="width:26px;height:26px;border-radius:50%;background:${C.indigo};border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.5);color:#fff;font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center">${m.n}</div>`,
+          }),
+        });
       } else if (m.kind === 'dim') {
         mk = L.circleMarker(ll, { radius: 5, color: '#fff', weight: 1.5, fillColor: '#8E97B3', fillOpacity: 0.85 });
       } else {

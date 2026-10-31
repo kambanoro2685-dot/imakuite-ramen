@@ -3,7 +3,7 @@ import { ScrollView, Text, View } from 'react-native';
 import { googleMapsUrl, googleRouteUrl, openUrl } from './maps';
 import MapView from './MapView';
 import { Go } from './nav';
-import { pinLabel, visitedPins } from './pins';
+import { buildTrail, pinLabel, visitedPins } from './pins';
 import { Credit } from './Search';
 import { useSamples } from './sample';
 import { useStore } from './store';
@@ -21,10 +21,14 @@ export default function MapScreen({ go }: { go: Go }) {
   const { S } = useStore();
   const { venues, center, loading, error, locating, useMyLocation, byId } = useVenues();
   const [near, setNear] = useState(false);
+  const [trailOn, setTrailOn] = useState(true);
   const [sel, setSel] = useState<string | null>(null);
   const samples = useSamples();
 
   const pins = useMemo(() => visitedPins(S.posts, byId), [S.posts, venues]); // eslint-disable-line react-hooks/exhaustive-deps
+  const trail = useMemo(() => buildTrail(S.posts, byId), [S.posts, venues]); // eslint-disable-line react-hooks/exhaustive-deps
+  const numOf = new Map(trail.stops.map((t) => [t.id, t.no]));
+  const showTrail = trailOn && trail.stops.length > 0;
   const mission = S.mission && Date.now() - S.mission.at < DAY ? S.mission : null;
   const base = center.source === 'gps' ? '現在地' : '岡山駅';
 
@@ -36,7 +40,11 @@ export default function MapScreen({ go }: { go: Go }) {
           .map((v) => ({ id: v.id, lat: v.lat, lng: v.lng, kind: 'dim' as const, label: v.n }))
       : []),
     ...(center.source === 'gps' ? [{ id: 'me', lat: center.lat, lng: center.lng, kind: 'me' as const, label: '現在地' }] : []),
-    ...pins.map((p) => ({ id: p.id, lat: p.lat, lng: p.lng, kind: 'normal' as const, label: pinLabel(p) })),
+    ...pins.map((p) => ({
+      id: p.id, lat: p.lat, lng: p.lng, kind: 'normal' as const,
+      label: showTrail && numOf.has(p.id) ? `${numOf.get(p.id)}. ${pinLabel(p)}` : pinLabel(p),
+      n: showTrail ? numOf.get(p.id) : undefined,
+    })),
     ...(mission ? [{ id: mission.id, lat: mission.lat, lng: mission.lng, kind: 'win' as const, label: `指令: ${mission.n}` }] : []),
   ];
 
@@ -75,12 +83,24 @@ export default function MapScreen({ go }: { go: Go }) {
         height={400}
         center={pins[0] ? { lat: pins[0].lat, lng: pins[0].lng } : mission ? { lat: mission.lat, lng: mission.lng } : center}
         markers={markers}
+        path={showTrail ? trail.path : undefined}
         onSelect={(id) => setSel(id)}
       />
 
       <Chips>
+        <Chip label={trailOn ? '✓ 軌跡を表示中（行った順）' : '軌跡を表示する'} on={trailOn} onPress={() => setTrailOn(!trailOn)} />
         <Chip label={near ? '✓ 周辺の店も表示中' : '周辺の店も表示する'} on={near} onPress={() => setNear(!near)} />
       </Chips>
+
+      {showTrail ? (
+        <Card flat>
+          <Text style={{ color: C.ink, fontWeight: '800' }}>🧭 ラーメンの軌跡</Text>
+          <Muted>
+            {trail.stops.length}軒・{trail.visits}回の調査。最初は {new Date(trail.stops[0].first).toLocaleDateString('ja-JP')}
+            {trail.path.length > 1 ? `。行った順に線でつなぐと、約${(trail.meters / 1000).toFixed(1)}km（直線距離の合計）。矢印（▶）が進んだ向きです` : ''}。
+          </Muted>
+        </Card>
+      ) : null}
 
       {info ? (
         <Card>
@@ -119,7 +139,7 @@ export default function MapScreen({ go }: { go: Go }) {
           {pins.map((p) => (
             <Card key={p.id}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}>
-                <Text style={{ fontWeight: '800', color: C.ink, flexShrink: 1 }}>{p.n}</Text>
+                <Text style={{ fontWeight: '800', color: C.ink, flexShrink: 1 }}>{numOf.has(p.id) ? `${numOf.get(p.id)}. ` : ''}{p.n}</Text>
                 <Text style={{ fontFamily: mono, fontSize: 11.5, color: C.ink3 }}>{new Date(p.last).toLocaleDateString('ja-JP')}</Text>
               </View>
               <Muted>{p.g}　／　{p.count}回調査　／　満足度 {p.lastSat}</Muted>
