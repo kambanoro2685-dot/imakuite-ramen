@@ -26,7 +26,7 @@ function Tag({ t, kind }: { t: string; kind?: 'new' | 'cnt' }) {
   );
 }
 
-const RANK_SHORT = ['見習い', '三等', '二等', '一等', '主任', '特別監察官'];
+const RANK_SHORT = ['見習い', '三級', '二級', '一級', '主任', '特別監察官'];
 
 /** この店を調査した人の階級の内訳（3件以上のときだけ。個人は特定できない） */
 export function RankMix({ ranks, big }: { ranks: number[] | null; big?: boolean }) {

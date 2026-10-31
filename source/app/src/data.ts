@@ -34,7 +34,7 @@ export const FIELDS: FieldDef[] = [
   { k: 'note', n: '食べた後の感想', pt: 10, rank: 0, type: 'text' },
   { k: 'base', n: 'デフォルトの具材（最初から乗っているもの）', pt: 0, rank: 0, type: 'multi', opts: INGREDIENTS, hint: '丼の中身だけ。定食の具材・ご飯・チャーハン・餃子は入力できません' },
   { k: 'base_other', n: 'デフォルトの具材（その他・自由入力）', pt: 0, rank: 0, type: 'item' },
-  { k: 'toppings', n: 'トッピング（追加したもの）', pt: 0, rank: 0, type: 'multi', opts: TOPPINGS, hint: '追加したトッピングだけ。一等以上は、1つ以上選ぶと +3pt' },
+  { k: 'toppings', n: 'トッピング（追加したもの）', pt: 0, rank: 0, type: 'multi', opts: TOPPINGS, hint: '追加したトッピングだけ。一級以上は、1つ以上選ぶと +3pt' },
   { k: 'tops_other', n: 'トッピング（その他・自由入力）', pt: 0, rank: 0, type: 'item' },
   { k: 'sides', n: '付け合わせ（薬味・卓上の味付けなど）', pt: 0, rank: 0, type: 'multi', opts: SIDES, hint: '薬味や卓上の味付けなど。ご飯・餃子は入力できません' },
   { k: 'sides_other', n: '付け合わせ（その他・自由入力）', pt: 0, rank: 0, type: 'item' },
@@ -48,7 +48,7 @@ export const FIELDS: FieldDef[] = [
   { k: 'hunger', n: 'おなかの減り具合（入店前）', pt: 3, rank: 0, type: 'range', labels: ['', '平気', '少し空いた', 'そこそこ', 'かなり', '限界'] },
   { k: 'party', n: '何人で行ったか', pt: 3, rank: 0, type: 'pick', opts: ['1人', '2人', '3人', '4人', '5人以上'] },
 
-  // ---- 三等（300pt〜）: 清掃・環境・体調 ----
+  // ---- 三級（300pt〜）: 清掃・環境・体調 ----
   { k: 'cl_entrance', n: '清掃｜入口・外観', pt: 3, rank: 1, type: 'pick', opts: GOOD3 },
   { k: 'cl_seating', n: '清掃｜席まわり', pt: 3, rank: 1, type: 'pick', opts: GOOD3 },
   { k: 'cl_tableware', n: '清掃｜食器・箸', pt: 3, rank: 1, type: 'pick', opts: GOOD3 },
@@ -65,7 +65,7 @@ export const FIELDS: FieldDef[] = [
   { k: 'kaedama', n: '替え玉', pt: 0, rank: 1, type: 'pick', opts: ['替え玉した', 'しなかった', '替え玉なし（つけ麺など）'] },
   { k: 'full', n: '食後の満腹度', pt: 3, rank: 1, type: 'range', labels: ['', 'まだ入る', 'ほどよい', '満足', 'お腹いっぱい', '食べすぎ'], hint: '入店前の空腹と合わせて +6pt' },
 
-  // ---- 二等（1,200pt〜）: 味の分析・接客 ----
+  // ---- 二級（1,200pt〜）: 味の分析・接客 ----
   { k: 'ts_sweet', n: 'スープ｜甘み', pt: 2, rank: 2, type: 'rating' },
   { k: 'ts_salty', n: 'スープ｜塩気', pt: 2, rank: 2, type: 'rating' },
   { k: 'ts_sour', n: 'スープ｜酸味', pt: 2, rank: 2, type: 'rating' },
@@ -75,7 +75,7 @@ export const FIELDS: FieldDef[] = [
   { k: 'service', n: '接客', pt: 3, rank: 2, type: 'pick', opts: ['残念', 'いまいち', 'ふつう', '良い', 'とても良い'] },
   { k: 'speed', n: '提供までの時間', pt: 3, rank: 2, type: 'pick', opts: ['すぐ', '〜5分', '〜10分', '10分超'], hint: '接客と合わせて +5pt' },
 
-  // ---- 一等（3,000pt〜）: 品質・設備・支払い ----
+  // ---- 一級（3,000pt〜）: 品質・設備・支払い ----
   { k: 'aroma', n: '品質｜香り（スープ・油）', pt: 3, rank: 3, type: 'pick', opts: GOOD3 },
   { k: 'texture', n: '品質｜麺の食感', pt: 3, rank: 3, type: 'pick', opts: GOOD3 },
   { k: 'temperature', n: '品質｜スープの温度', pt: 3, rank: 3, type: 'pick', opts: GOOD3 },
@@ -106,9 +106,9 @@ export const DEFAULT_PALETTE: Record<string, boolean> = { soup: true, base: true
 
 export const RANKS = [
   { n: '見習い', at: 0, unlock: '基本の入力項目（写真・価格・感想・スープの系統・具材・トッピング・付け合わせなど）。ルーレットは1日3回。評価できる範囲は自分が投稿した店だけです。' },
-  { n: '三等インスペクター', at: 300, unlock: '入力項目「濃さ・麺の太さと硬さ・替え玉」「清掃5項目・静かさ・待ち時間・満腹度」など14項目が増えます。ルーレット無制限。どの店でも、直近30日の他の調査官の評価が読めます。' },
-  { n: '二等インスペクター', at: 1200, unlock: '入力項目「スープの味5評価・接客・提供時間」の8項目が増えます。全期間の平均値（満足度・価格・待ち時間・濃さ・味など）が読めます。' },
-  { n: '一等インスペクター', at: 3000, unlock: '入力項目「品質4項目・混み具合・支払い・設備」の9項目が増えます。全期間・全件の評価が読めて、並べ替えもできます。' },
+  { n: '三級インスペクター', at: 300, unlock: '入力項目「濃さ・麺の太さと硬さ・替え玉」「清掃5項目・静かさ・待ち時間・満腹度」など14項目が増えます。ルーレット無制限。どの店でも、直近30日の他の調査官の評価が読めます。' },
+  { n: '二級インスペクター', at: 1200, unlock: '入力項目「スープの味5評価・接客・提供時間」の8項目が増えます。全期間の平均値（満足度・価格・待ち時間・濃さ・味など）が読めます。' },
+  { n: '一級インスペクター', at: 3000, unlock: '入力項目「品質4項目・混み具合・支払い・設備」の9項目が増えます。全期間・全件の評価が読めて、並べ替えもできます。' },
   { n: '主任インスペクター', at: 8000, unlock: '入力項目「騒音の測定・推し一杯・来店の目的」が増えます。他の調査官の訂正履歴が読めます。' },
   { n: '特別監察官', at: 20000, unlock: '指摘の検証キューに参加できます（信頼度800以上）。' },
 ];

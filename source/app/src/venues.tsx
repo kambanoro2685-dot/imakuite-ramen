@@ -13,7 +13,7 @@ export type Venue = {
   url: string | null;
   /** 評価件数。3件未満は null（調査待ち） */
   reviews: number | null;
-  /** 階級ごとの調査件数 [見習い,三等,二等,一等,主任,特別監察官]。3件未満は null */
+  /** 階級ごとの調査件数 [見習い,三級,二級,一級,主任,特別監察官]。3件未満は null */
   ranks: number[] | null;
   /** 口コミ3件以上の店だけ: いちばん多いスープの系統・濃さの平均(0〜4)・いちばん多い麺の太さ */
   soup: string | null;

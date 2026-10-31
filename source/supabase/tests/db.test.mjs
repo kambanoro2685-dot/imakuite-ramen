@@ -45,6 +45,7 @@ await db.exec(read('0016_shop_source.sql'));
 await db.exec(read('0017_ramen_only_items.sql'));
 await db.exec(read('0018_review_items.sql'));
 await db.exec(read('0019_removed_disliked_items.sql'));
+await db.exec(read('0020_rank_names.sql'));
 
 let failed = 0, passed = 0;
 const ok = (c, name, extra = '') => { c ? passed++ : failed++; console.log(`${c ? 'PASS' : 'FAIL'}  ${name}${c ? '' : '  ' + extra}`); };
@@ -196,13 +197,13 @@ const k0 = await detail(1);
 ok(k0 === 'dish_card,first_visit_bonus,quick_report', '見習い: 詳細項目を書いても加点されない', k0);
 await q('update public.inspector set rank = 1 where id = $1', [R.id]);
 const k1 = await detail(2);
-ok(k1 === 'clean_5,condition,dish_card,environment,first_visit_bonus,quick_report', '三等: 清掃・環境・体調が加点される', k1);
+ok(k1 === 'clean_5,condition,dish_card,environment,first_visit_bonus,quick_report', '三級: 清掃・環境・体調が加点される', k1);
 await q('update public.inspector set rank = 2 where id = $1', [R.id]);
 const k2 = await detail(3);
-ok(k2.includes('taste_analysis') && k2.includes('service_info') && !k2.includes('quality_4'), '二等: 味の分析・接客が加点され、品質はまだ', k2);
+ok(k2.includes('taste_analysis') && k2.includes('service_info') && !k2.includes('quality_4'), '二級: 味の分析・接客が加点され、品質はまだ', k2);
 await q('update public.inspector set rank = 3 where id = $1', [R.id]);
 const k3 = await detail(4);
-ok(k3.includes('quality_4') && k3.includes('facility_info') && !k3.includes('noise_measured'), '一等: 品質・設備が加点され、騒音はまだ', k3);
+ok(k3.includes('quality_4') && k3.includes('facility_info') && !k3.includes('noise_measured'), '一級: 品質・設備が加点され、騒音はまだ', k3);
 await q('update public.inspector set rank = 4 where id = $1', [R.id]);
 const k4 = await detail(5);
 ok(k4.includes('noise_measured'), '主任: 騒音の測定が加点される', k4);
@@ -286,40 +287,40 @@ ok(rv.scope === 'own_shop' && rv.items.length === 4, '見習い: 自分が行っ
 ok(it.price.masked !== true && it.note.masked !== true, '見習い: 自分が入力した項目（価格・感想）は見える');
 ok(it.volume.masked && it.volume.reason === 'input', '見習い: 自分が入力していない項目は黒塗り（reason=input）');
 ok(it.clean.masked && it.clean.reason === 'rank' && it.clean.need_rank === 1, '見習い: 階級が足りない項目は黒塗り（reason=rank, need_rank=1）');
-ok(it.taste.masked && it.taste.need_rank === 2 && it.noise.need_rank === 4, '見習い: 味は二等、騒音は主任から');
-ok(it.photos.masked === true, '見習い: 写真は三等から');
+ok(it.taste.masked && it.taste.need_rank === 2 && it.noise.need_rank === 4, '見習い: 味は二級、騒音は主任から');
+ok(it.photos.masked === true, '見習い: 写真は三級から');
 ok(!JSON.stringify(rv).includes('評価者') && !JSON.stringify(rv).includes(reviewers[0].id) && !JSON.stringify(rv).includes(reviewers[0].pid), '他人の名前・IDは返らない');
 ok(!rv.items.some((x) => x.dish === '自分の皿'), '自分の来店は「他の調査官」に含まれない');
 ok(Object.keys(rv.summary).length === 0 || rv.summary.satisfaction?.masked, '見習い: 平均値は見えない');
 
-// 三等: 直近30日だけ（60日前は除外）
+// 三級: 直近30日だけ（60日前は除外）
 await setRank(1);
 rv = await reviews();
-ok(rv.scope === '30days' && rv.items.length === 3 && rv.total === 4, '三等: 直近30日の3件だけ見える（全4件）', JSON.stringify([rv.scope, rv.items.length]));
-ok(rv.items[0].clean.masked && rv.items[0].clean.reason === 'input', '三等: 階級は足りていても、未入力の項目（清掃）は黒塗り');
-ok(rv.items[0].photos.masked !== true, '三等: 写真が見える');
+ok(rv.scope === '30days' && rv.items.length === 3 && rv.total === 4, '三級: 直近30日の3件だけ見える（全4件）', JSON.stringify([rv.scope, rv.items.length]));
+ok(rv.items[0].clean.masked && rv.items[0].clean.reason === 'input', '三級: 階級は足りていても、未入力の項目（清掃）は黒塗り');
+ok(rv.items[0].photos.masked !== true, '三級: 写真が見える');
 await q("insert into public.visit_score (visit_id, satisfaction, clean_entrance) select id, 50, 0 from public.visit where inspector_id = $1 and id <> $2 and false", [VW.id, myv]);
 await q("update public.visit_score set clean_entrance = 0, quietness = 1 where visit_id = $1", [myv]);
 rv = await reviews();
-ok(rv.items[0].clean.masked !== true && rv.items[0].quiet.masked !== true, '三等: 清掃・静かさを入力したら見える');
-ok(rv.sort === 'new', '三等: 並べ替えはできない（常に新しい順）');
-ok(rv.items[0].taste.masked && rv.items[0].taste.reason === 'rank', '三等: 味は二等から');
+ok(rv.items[0].clean.masked !== true && rv.items[0].quiet.masked !== true, '三級: 清掃・静かさを入力したら見える');
+ok(rv.sort === 'new', '三級: 並べ替えはできない（常に新しい順）');
+ok(rv.items[0].taste.masked && rv.items[0].taste.reason === 'rank', '三級: 味は二級から');
 
-// 二等: 平均値
+// 二級: 平均値
 await setRank(2);
 rv = await reviews();
-ok(rv.summary.satisfaction.avg !== undefined && rv.summary.n === 4, '二等: 全期間の平均満足度が見える', JSON.stringify(rv.summary.satisfaction));
-ok(rv.summary.taste.masked && rv.summary.taste.reason === 'input', '二等: 味の平均は、自分が味を入力するまで黒塗り');
-ok(rv.items.length === 3, '二等: 個別の評価は直近30日');
+ok(rv.summary.satisfaction.avg !== undefined && rv.summary.n === 4, '二級: 全期間の平均満足度が見える', JSON.stringify(rv.summary.satisfaction));
+ok(rv.summary.taste.masked && rv.summary.taste.reason === 'input', '二級: 味の平均は、自分が味を入力するまで黒塗り');
+ok(rv.items.length === 3, '二級: 個別の評価は直近30日');
 
-// 一等: 全期間・並べ替え
+// 一級: 全期間・並べ替え
 await setRank(3);
 rv = await reviews('high');
-ok(rv.scope === 'all' && rv.items.length === 4, '一等: 全期間の4件が見える');
-ok(rv.items.map((x) => x.satisfaction).join(',') === '90,80,60,40', '一等: 満足度の高い順に並べ替えできる', rv.items.map((x) => x.satisfaction).join(','));
+ok(rv.scope === 'all' && rv.items.length === 4, '一級: 全期間の4件が見える');
+ok(rv.items.map((x) => x.satisfaction).join(',') === '90,80,60,40', '一級: 満足度の高い順に並べ替えできる', rv.items.map((x) => x.satisfaction).join(','));
 rv = await reviews('cheap');
-ok(rv.items[0].price.price_yen === 700, '一等: 安い順に並べ替えできる');
-ok(rv.items[0].corrections.masked && rv.items[0].corrections.need_rank === 4, '一等: 訂正履歴は主任から');
+ok(rv.items[0].price.price_yen === 700, '一級: 安い順に並べ替えできる');
+ok(rv.items[0].corrections.masked && rv.items[0].corrections.need_rank === 4, '一級: 訂正履歴は主任から');
 
 // 主任: 訂正履歴
 await setRank(4);
@@ -374,13 +375,13 @@ const ramenVisit = async (u, dish) => {
   await as(u.id, () => q('insert into public.visit_score (visit_id, satisfaction) values ($1, 80)', [v]));
   return (await as(u.id, () => q('select public.submit_visit($1) as r', [v]))).rows[0].r;
 };
-const R0 = await newUser('麺見習い'), R1 = await newUser('麺三等'), R2 = await newUser('麺三等二');
+const R0 = await newUser('麺見習い'), R1 = await newUser('麺三級'), R2 = await newUser('麺三級二');
 await q("update public.inspector set rank = 1 where id in ($1, $2)", [R1.id, R2.id]);
 const b0 = await ramenVisit(R0, { soup: '豚骨', rich: 4, thick: '細', firm: '固め' });
 ok(b0.breakdown.some((x) => x.kind === 'ramen_soup'), 'ラーメン: スープで +5pt');
 ok(!b0.breakdown.some((x) => x.kind === 'ramen_noodle'), 'ラーメン: 見習いは麺の項目で加点されない（階級で解放）');
 const b1 = await ramenVisit(R1, { soup: '豚骨', rich: 3, thick: '細', firm: '固め', kae: true });
-ok(b1.breakdown.some((x) => x.kind === 'ramen_noodle'), 'ラーメン: 三等は濃さ・麺で +8pt');
+ok(b1.breakdown.some((x) => x.kind === 'ramen_noodle'), 'ラーメン: 三級は濃さ・麺で +8pt');
 await ramenVisit(R2, { soup: '醤油', rich: 4, thick: '中', firm: '普通', top: '味玉,チャーシュー' });
 const sr = (await as(A.id, () => q('select * from public.search_shops(34.671, 133.921, 300)'))).rows.find((r) => r.id === RS);
 ok(sr.soup_top === '豚骨' && sr.thick_top === '細' && Number(sr.richness_avg) === 3.7, '検索: 3件以上でスープ・濃さ・麺の太さが集計される', JSON.stringify(sr));
@@ -396,7 +397,7 @@ await q('update public.inspector set rank = 1 where id = $1', [RV.id]);
 const rr2 = await as(RV.id, async () => (await q('select public.shop_reviews($1) as r', [RS])).rows[0].r);
 const it0 = rr2.items[0];
 ok(it0.soup.soup && it0.noodle.richness !== undefined && it0.items.masked === true && it0.items.reason === 'input', 'ラーメン: 具材・トッピングは、自分が入力していないと黒塗り', JSON.stringify(it0.items));
-ok(rr2.summary?.richness && rr2.summary.richness.masked === undefined, 'ラーメン: 濃さの平均が出る（三等・入力済み）', JSON.stringify(rr2.summary));
+ok(rr2.summary?.richness && rr2.summary.richness.masked === undefined, 'ラーメン: 濃さの平均が出る（三級・入力済み）', JSON.stringify(rr2.summary));
 
 // ===== 麺の種類 =====
 {

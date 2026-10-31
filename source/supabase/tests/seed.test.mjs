@@ -45,6 +45,7 @@ await db.exec(read('0016_shop_source.sql'));
 await db.exec(read('0017_ramen_only_items.sql'));
 await db.exec(read('0018_review_items.sql'));
 await db.exec(read('0019_removed_disliked_items.sql'));
+await db.exec(read('0020_rank_names.sql'));
 
 
 let failed = 0, passed = 0;
@@ -70,7 +71,7 @@ ok(byRank.length === 6 && byRank[0].n >= 100 && byRank[5].n === 1, '階級が見
 ok(byRank.every((r) => r.n >= 1), '全階級に人がいる', JSON.stringify(byRank));
 const pub = (await one("select count(*)::int as n from public.inspector where public_id like 'IKS-%' and is_public")).n;
 ok(pub >= 90 && pub <= 130, `およそ半分が公開（${pub}人）`);
-ok((await one("select count(*)::int as n from public.inspector where public_id like 'IKS-%' and rank >= 3 and not is_public")).n === 0, '一等以上は全員公開');
+ok((await one("select count(*)::int as n from public.inspector where public_id like 'IKS-%' and rank >= 3 and not is_public")).n === 0, '一級以上は全員公開');
 const visits = (await one("select count(*)::int as n from public.visit v join public.inspector i on i.id = v.inspector_id where i.public_id like 'IKS-%' and v.submitted_at is not null")).n;
 ok(visits >= 800, `投稿がたくさんある（${visits}件）`);
 ok((await one('select count(*)::int as n from public.visit v left join public.visit_score s on s.visit_id = v.id where s.visit_id is null')).n === 0, 'すべての投稿に評価がある');
@@ -90,6 +91,7 @@ await db.exec('reset role;');
 ok(rkp.length === Math.min(100, pub) && Number(rkp[0].pos) === 1 && rkp[0].rank_name === '特別監察官', 'ポイント順ランキングの1位は特別監察官', JSON.stringify(rkp[0]));
 ok(rkf.length === Math.min(100, pub) && rkf[0].fans >= 3 && rkf[0].fans < 100, '推され順ランキングに、推されている人がいる', JSON.stringify(rkf[0]));
 ok(rkp.every((r) => r.codename.startsWith('見本')), 'ランキングには見本の調査官だけ（本物の人は非公開）');
+ok(rkp.every((r) => ['見習い', '三級', '二級', '一級', '主任', '特別監察官'].includes(r.rank_name)), '階級の呼び名は 三級・二級・一級（〜等ではない）', JSON.stringify([...new Set(rkp.map((r) => r.rank_name))]));
 
 // 2回入れない
 let again = null; try { await db.exec(seedSql); } catch (e) { again = e.message; }
