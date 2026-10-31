@@ -5,6 +5,7 @@ import { photoSupported, processPhoto } from './photo';
 import { uploadPhoto } from './storage';
 import { DraftPhoto, useDraft } from './draft';
 import { FIELDS, RANKS, TIER_TITLES } from './data';
+import { createShop, friendly } from './account';
 import { useVenues, walkMin, walkText } from './venues';
 import { Go } from './nav';
 import { uuid4 } from './supabase';
@@ -40,12 +41,40 @@ export default function PostScreen({ go }: { go: Go }) {
   const rankIdx = rankIndexOf(S.pt);
   const active = FIELDS.filter((f) => f.rank <= rankIdx && S.palette[f.k]);
   const pts = draftPoints(D, S.palette, S.visited, rankIdx);
-  const { venues, byId, center, loading, error, locating, useMyLocation, resetCenter, radius } = useVenues();
+  const { venues, byId, center, loading, error, locating, useMyLocation, locateHere, addVenue, resetCenter, radius, reload } = useVenues();
+  const [adding, setAdding] = React.useState(false);
+  const [addAsk, setAddAsk] = React.useState(false);
+  const [addErr, setAddErr] = React.useState('');
   const [vq, setVq] = React.useState('');
   const nq = vq.normalize('NFKC').toLowerCase().replace(/\s+/g, '');
   const near = (nq ? venues.filter((v) => v.n.normalize('NFKC').toLowerCase().includes(nq)) : venues).slice(0, 6);
   const picked = D.venue ? byId(D.venue) : undefined;
   const venueShown = picked && !near.some((v) => v.id === picked.id) ? [picked, ...near] : near;
+
+  // 候補にない店（ラーメン専門店でない店・新しい店）を、いまの場所に追加する
+  const addShop = async () => {
+    const name = vq.trim();
+    if (!name || adding) return;
+    if (!S.account || !signedIn) return setAddErr('店を追加するには、アカウント登録（ログイン）が必要です。');
+    if (!addAsk) return setAddErr(''), setAddAsk(true);
+    setAdding(true);
+    setAddErr('');
+    try {
+      const here = await locateHere();
+      const id = await createShop(name, here.lat, here.lng);
+      addVenue({ id, n: name, g: 'その他', lat: here.lat, lng: here.lng, url: null, reviews: null, ranks: null, soup: null, rich: null, thick: null, ntype: null, toppings: null, dist: 0 });
+      setD((x) => ({ ...x, venue: id }));
+      setVq('');
+      setAddAsk(false);
+      showToast(`「${name}」を現在地の店として追加しました。+100pt（サーバで計算）`);
+    } catch (e) {
+      const m = friendly(e);
+      setAddErr(/duplicate_shop/i.test(String((e as any)?.message)) ? 'この近くに、同じ名前の店がすでにあります。店名で探して、候補から選んでください。' : m);
+      await reload().catch(() => {});
+    } finally {
+      setAdding(false);
+    }
+  };
 
   const setVal = (k: string, v: string) => setD((x) => ({ ...x, vals: { ...x.vals, [k]: v } }));
 
@@ -126,6 +155,23 @@ export default function PostScreen({ go }: { go: Go }) {
           <Lbl>① 調査対象（どこで）</Lbl>
           <Input value={vq} onChangeText={setVq} placeholder="店名で探す（近くの店が候補に出ます）" />
           <Muted>
+            ラーメン専門店でなくても構いません。候補にない店は、店名を上の欄に入れると、いまの場所の店として追加できます。
+          </Muted>
+          {vq.trim() ? (
+            <View style={{ gap: 6 }}>
+              {addAsk ? (
+                <Text style={{ color: C.crit, fontWeight: '700', lineHeight: 20 }}>
+                  「{vq.trim()}」を、いまいる場所（現在地）の店として追加します。他の人の店リストにも載ります。よろしければ、もう一度押してください。
+                </Text>
+              ) : null}
+              <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
+                <Btn small label={adding ? '追加中…' : addAsk ? '追加する（現在地を使います）' : `＋ 「${vq.trim()}」を現在地の店として追加`} onPress={addShop} />
+                {addAsk && !adding ? <Btn small kind="ghost" label="やめる" onPress={() => setAddAsk(false)} /> : null}
+              </View>
+              {addErr ? <Text selectable style={{ color: C.crit, fontWeight: '700' }}>{addErr}</Text> : null}
+            </View>
+          ) : null}
+          <Muted>
             基準: {center.source === 'gps' ? '現在地' : '岡山駅'}（近い店から表示。半径{radius / 1000}km）{radius > 3000 ? '　※ 近くに店が少ないため、範囲を広げています。' : ''}
           </Muted>
           {picked ? (
@@ -152,7 +198,7 @@ export default function PostScreen({ go }: { go: Go }) {
               <Btn small label="岡山駅周辺の店を出す" onPress={resetCenter} style={{ alignSelf: 'flex-start' }} />
             </View>
           ) : null}
-          {!loading && venues.length > 0 && nq && near.length === 0 ? <Muted>「{vq}」に合う店が、この周辺にありません。別の言葉で探してください。</Muted> : null}
+          {!loading && venues.length > 0 && nq && near.length === 0 ? <Muted>「{vq}」に合う店が、この周辺にありません。別の言葉で探すか、上のボタンで現在地の店として追加できます。</Muted> : null}
           <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
             {center.source === 'gps' ? <Btn small kind="ghost" label="岡山駅周辺にする" onPress={resetCenter} /> : null}
             <Btn small kind="ghost" label={locating ? '取得中…' : center.source === 'gps' ? '📍 現在地を更新' : '📍 現在地にする'} onPress={useMyLocation} />

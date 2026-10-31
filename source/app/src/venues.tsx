@@ -46,6 +46,10 @@ type Ctx = {
   radius: number;
   reload: () => Promise<void>;
   useMyLocation: () => Promise<void>;
+  /** 追加した店を、候補の先頭に足す（サーバから読み直すまでの間も使えるように） */
+  addVenue: (v: Venue) => void;
+  /** いまの場所を取得して、基準にする（座標を返す） */
+  locateHere: () => Promise<{ lat: number; lng: number }>;
   /** 基準を岡山駅（対象エリアの中心）にもどす */
   resetCenter: () => void;
   byId: (id: string) => Venue | undefined;
@@ -126,12 +130,26 @@ export function VenueProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const addVenue = useCallback((nv: Venue) => {
+    seen.current.set(nv.id, nv);
+    setVenues((l) => [nv, ...l.filter((x) => x.id !== nv.id)]);
+  }, []);
+
+  const locateHere = useCallback(async () => {
+    const perm = await Location.requestForegroundPermissionsAsync();
+    if (perm.status !== 'granted') throw new Error('位置情報が許可されていません。ブラウザの設定で許可してください。');
+    const pos = await Location.getCurrentPositionAsync({});
+    const here = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+    setCenter({ ...here, source: 'gps' });
+    return here;
+  }, []);
+
   const resetCenter = useCallback(() => setCenter(DEFAULT_CENTER), []);
 
   const byId = useCallback((id: string) => seen.current.get(id), []);
 
   return (
-    <VenueCtx.Provider value={{ venues, center, loading, error, locating, reload, useMyLocation, resetCenter, radius, byId, oshiOf, reloadOshi }}>
+    <VenueCtx.Provider value={{ venues, center, loading, error, locating, reload, useMyLocation, locateHere, addVenue, resetCenter, radius, byId, oshiOf, reloadOshi }}>
       {children}
     </VenueCtx.Provider>
   );
