@@ -1,3 +1,4 @@
+import { RANK_ICON } from './icons';
 import React, { useState } from 'react';
 import { Image, ScrollView, Text, View } from 'react-native';
 import { addPasskey, deleteAccount, fetchMe, friendly, issueRecoveryCode, logout, passkeySupported } from './account';
@@ -87,7 +88,10 @@ export default function My() {
 
       <Card>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-          <Text style={{ fontWeight: '800', fontSize: 16, color: C.ink }}>{r.n}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Image source={RANK_ICON[idx]} style={{ width: 44, height: 44 }} resizeMode="contain" accessibilityIgnoresInvertColors />
+            <Text style={{ fontWeight: '800', fontSize: 16, color: C.ink }}>{r.n}</Text>
+          </View>
           <Text style={{ fontFamily: mono, fontSize: 12, color: C.ink3 }}>
             {next ? `次「${next.n}」まで ${(next.at - S.pt).toLocaleString()}pt` : '最上位'}
           </Text>

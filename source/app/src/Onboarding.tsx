@@ -1,3 +1,4 @@
+import { chipIcon } from './icons';
 import React, { useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { addPasskey, friendly, loginWithPasskey, loginWithRecoveryCode, passkeySupported, recordTerms, startAccount } from './account';
@@ -222,7 +223,7 @@ export default function Onboarding() {
         <Lbl>②-3 麺の太さの好み（任意）</Lbl>
         <Chips>
           {THICKNESS.map((t) => (
-            <Chip key={t} label={t} on={thick === t} onPress={() => setThick(thick === t ? '' : t)} />
+            <Chip key={t} label={t} icon={chipIcon('thick', t)} on={thick === t} onPress={() => setThick(thick === t ? '' : t)} />
           ))}
         </Chips>
       </View>
@@ -231,7 +232,7 @@ export default function Onboarding() {
         <Lbl>②-4 麺の種類の好み（任意）</Lbl>
         <Chips>
           {NOODLE_TYPES.map((t) => (
-            <Chip key={t} label={t} on={ntype === t} onPress={() => setNtype(ntype === t ? '' : t)} />
+            <Chip key={t} label={t} icon={chipIcon('ntype', t)} on={ntype === t} onPress={() => setNtype(ntype === t ? '' : t)} />
           ))}
         </Chips>
         <Muted>ちぢれ麺はスープをよく持ち上げ、ストレートは喉ごしがよく、平打ちはもちもちです。</Muted>
@@ -241,7 +242,7 @@ export default function Onboarding() {
         <Lbl>②-5 好きなトッピング（複数・任意）</Lbl>
         <Chips>
           {TOPPINGS.map((t) => (
-            <Chip key={t} label={t} on={tops.includes(t)} onPress={() => toggleTop(t)} />
+            <Chip key={t} label={t} icon={chipIcon('toppings', t)} on={tops.includes(t)} onPress={() => toggleTop(t)} />
           ))}
         </Chips>
         <Muted>口コミで人気のトッピングが合う店ほど、相性が上がります。</Muted>

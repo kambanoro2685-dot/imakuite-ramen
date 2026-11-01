@@ -1,3 +1,4 @@
+import { chipIcon } from './icons';
 import React from 'react';
 import { Image, Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
@@ -273,7 +274,7 @@ export default function PostScreen({ go }: { go: Go }) {
             {f.type === 'pick' ? (
               <Chips>
                 {f.opts.map((o) => (
-                  <Chip key={o} label={o} on={D.vals[f.k] === o} onPress={() => setVal(f.k, D.vals[f.k] === o ? '' : o)} />
+                  <Chip key={o} label={o} icon={chipIcon(f.k, o)} on={D.vals[f.k] === o} onPress={() => setVal(f.k, D.vals[f.k] === o ? '' : o)} />
                 ))}
               </Chips>
             ) : f.type === 'faces' ? (
@@ -304,6 +305,7 @@ export default function PostScreen({ go }: { go: Go }) {
                     <Chip
                       key={o}
                       label={o}
+                      icon={chipIcon(f.k, o)}
                       on={on}
                       onPress={() => setVal(f.k, (on ? cur.filter((x) => x !== o) : [...cur, o]).join(','))}
                     />

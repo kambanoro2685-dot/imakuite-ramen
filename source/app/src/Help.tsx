@@ -1,5 +1,6 @@
+import { RANK_ICON } from './icons';
 import React, { useState } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { ScrollView, Text, View, Image } from 'react-native';
 import { POINT_RULES, RANKS } from './data';
 import { Go } from './nav';
 import { rankOf, useStore } from './store';
@@ -58,7 +59,10 @@ export default function Help({ go }: { go: Go }) {
 
       <Card>
         <Lbl>あなたの現在地</Lbl>
-        <Text {...font('head')} style={{ fontSize: 20, fontWeight: '800', color: C.ink }}>{cur.n}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <Image source={RANK_ICON[idx]} style={{ width: 52, height: 52 }} resizeMode="contain" accessibilityIgnoresInvertColors />
+          <Text {...font('head')} style={{ fontSize: 20, fontWeight: '800', color: C.ink }}>{cur.n}</Text>
+        </View>
         <Muted>{S.pt.toLocaleString()}pt ／ {next ? `次の「${next.n}」まであと ${(next.at - S.pt).toLocaleString()}pt` : '最上位です'}</Muted>
         <Meter pct={next ? ((S.pt - cur.at) / (next.at - cur.at)) * 100 : 100} />
       </Card>
@@ -76,9 +80,7 @@ export default function Help({ go }: { go: Go }) {
                 borderColor: here ? C.crit : C.line, backgroundColor: here ? '#FFF3EC' : C.surface,
               }}
             >
-              <View style={{ width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: here || done ? C.crit : C.line }}>
-                <Text style={{ fontWeight: '800', color: here || done ? C.crit : C.ink3 }}>{done ? '✓' : i + 1}</Text>
-              </View>
+              <Image source={RANK_ICON[i]} style={{ width: 40, height: 40, opacity: here || done ? 1 : 0.55 }} resizeMode="contain" accessibilityIgnoresInvertColors />
               <View style={{ flex: 1, gap: 2 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}>
                   <Text {...font('head')} style={{ fontWeight: '800', color: C.ink, flexShrink: 1 }}>{r.n}{here ? '　◀ 現在' : ''}</Text>

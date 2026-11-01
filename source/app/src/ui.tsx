@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal, Pressable, StyleSheet, Text, TextInput, TextInputProps, View, ViewStyle } from 'react-native';
+import { Image, ImageSourcePropType, Modal, Pressable, StyleSheet, Text, TextInput, TextInputProps, View, ViewStyle } from 'react-native';
 import { C, font, web } from './theme';
 
 export function Btn({
@@ -27,7 +27,7 @@ export function Btn({
 }
 
 /** インデックスシール風の選択肢。選ぶと朱の枠＋インク色が変わる */
-export function Chip({ label, on, onPress }: { label: string; on: boolean; onPress: () => void }) {
+export function Chip({ label, on, onPress, icon }: { label: string; on: boolean; onPress: () => void; icon?: ImageSourcePropType }) {
   return (
     <Pressable
       accessibilityRole="button"
@@ -35,7 +35,10 @@ export function Chip({ label, on, onPress }: { label: string; on: boolean; onPre
       onPress={onPress}
       style={[s.chip, on && { backgroundColor: C.indigo, borderColor: '#1B3566', ...web({ boxShadow: '0 2px 0 #1B3566' }) }]}
     >
-      <Text style={{ color: on ? '#FFFDF2' : C.ink2, fontSize: 13, fontWeight: on ? '800' : '500' }}>{label}</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+        {icon ? <Image source={icon} style={{ width: 24, height: 24 }} resizeMode="contain" accessibilityIgnoresInvertColors /> : null}
+        <Text style={{ color: on ? '#FFFDF2' : C.ink2, fontSize: 13, fontWeight: on ? '800' : '500' }}>{label}</Text>
+      </View>
     </Pressable>
   );
 }
